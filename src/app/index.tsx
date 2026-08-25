@@ -1,61 +1,73 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { setStoredProfileId } from '@/lib/profile-storage';
+import { supabase } from '@/lib/supabase';
+import type { ProfileId } from '@/types/database';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const PROFILES: { id: ProfileId; displayName: string }[] = [
+  { id: 'maksim', displayName: 'Максим' },
+  { id: 'maria', displayName: 'Мария' },
+];
 
-export default function HomeScreen() {
+export default function ProfilePickerScreen() {
+  const theme = useTheme();
+  const [loadingProfile, setLoadingProfile] = useState<ProfileId | null>(null);
+
+  async function selectProfile(id: ProfileId) {
+    setLoadingProfile(id);
+    try {
+      await setStoredProfileId(id);
+
+      const { data, error } = await supabase
+        .from('profile_settings')
+        .select('profile_id')
+        .eq('profile_id', id)
+        .maybeSingle();
+      if (error) throw error;
+
+      if (data) {
+        router.replace({ pathname: '/plan-ready', params: { profile: id } });
+      } else {
+        router.replace({ pathname: '/onboarding', params: { profile: id } });
+      }
+    } catch (err) {
+      setLoadingProfile(null);
+      console.error(err);
+    }
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
+        <ThemedText type="title" style={styles.title}>
+          Кто занимается?
+        </ThemedText>
+        <ThemedText type="default" themeColor="textSecondary" style={styles.subtitle}>
+          Выбери свой профиль
         </ThemedText>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
+        <ThemedView style={styles.cards}>
+          {PROFILES.map((profile) => (
+            <Pressable
+              key={profile.id}
+              onPress={() => selectProfile(profile.id)}
+              disabled={loadingProfile !== null}
+              style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
+              {loadingProfile === profile.id ? (
+                <ActivityIndicator color={theme.text} />
+              ) : (
+                <ThemedText type="subtitle">{profile.displayName}</ThemedText>
+              )}
+            </Pressable>
+          ))}
         </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
       </SafeAreaView>
     </ThemedView>
   );
@@ -64,35 +76,34 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
     gap: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    alignSelf: 'center',
+    maxWidth: MaxContentWidth,
+    width: '100%',
   },
   title: {
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  subtitle: {
+    textAlign: 'center',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
+  cards: {
+    flexDirection: 'row',
+    gap: Spacing.four,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  card: {
+    width: 160,
+    height: 160,
     borderRadius: Spacing.four,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
