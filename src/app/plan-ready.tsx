@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -123,7 +123,10 @@ export default function PlanReadyScreen() {
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">{program.name}</ThemedText>
               {workoutDays.map((day) => (
-                <View key={day.id} style={styles.dayBlock}>
+                <Pressable
+                  key={day.id}
+                  onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
+                  style={styles.dayBlock}>
                   <ThemedText type="default">
                     {day.day_label} · {day.target_muscle_groups.join(', ')} · {day.default_context}
                   </ThemedText>
@@ -132,10 +135,16 @@ export default function PlanReadyScreen() {
                       • {ex.exercise} — {ex.sets}×{ex.reps_or_time}
                     </ThemedText>
                   ))}
-                </View>
+                </Pressable>
               ))}
             </ThemedView>
           )}
+
+          <Pressable
+            onPress={() => router.push('/exercise-library')}
+            style={[styles.switchButton, { backgroundColor: theme.backgroundElement }]}>
+            <ThemedText type="smallBold">Библиотека упражнений</ThemedText>
+          </Pressable>
 
           {mealPlan && (
             <ThemedView type="backgroundElement" style={styles.card}>

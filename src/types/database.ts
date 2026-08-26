@@ -206,6 +206,7 @@ export interface Database {
           context_variants: ExerciseContextVariant[];
           short_on_time_alternative: string | null;
           sort_order: number;
+          exercise_library_id: string | null;
         },
         {
           id?: string;
@@ -219,6 +220,33 @@ export interface Database {
           context_variants?: ExerciseContextVariant[];
           short_on_time_alternative?: string | null;
           sort_order?: number;
+          exercise_library_id?: string | null;
+        }
+      >;
+      exercise_library: Table<
+        {
+          id: string;
+          name_ru: string;
+          category_ru: string | null;
+          level_ru: string | null;
+          equipment_ru: string | null;
+          primary_muscles_ru: string[];
+          secondary_muscles_ru: string[];
+          instructions_ru: string[] | null;
+          instructions_en: string[];
+          images: string[];
+        },
+        {
+          id: string;
+          name_ru: string;
+          category_ru?: string | null;
+          level_ru?: string | null;
+          equipment_ru?: string | null;
+          primary_muscles_ru?: string[];
+          secondary_muscles_ru?: string[];
+          instructions_ru?: string[] | null;
+          instructions_en?: string[];
+          images?: string[];
         }
       >;
       meal_plans: Table<
