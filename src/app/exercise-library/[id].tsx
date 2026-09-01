@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   image: {
     width: 240,
     height: 240,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
     marginRight: Spacing.two,
   },
   title: {
@@ -183,15 +183,16 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   card: {
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
     padding: Spacing.three,
     gap: Spacing.two,
     marginTop: Spacing.two,
+    ...Elevation.card,
   },
   confirmButton: {
     marginTop: Spacing.three,
     paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
     alignItems: 'center',
   },
 });
