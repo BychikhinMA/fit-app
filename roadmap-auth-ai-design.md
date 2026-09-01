@@ -55,6 +55,29 @@ Apple-style навигация + баг с пустым экраном упра�
 
 ### Шаг 1 — Новая навигация (адаптивный сайдбар/таб-бар, Apple-style) + visual-полировка
 
+**СТАТУС: РЕАЛИЗОВАНО** (2026-09-01, ветка `step1-adaptive-navigation`).
+Готова route-группа `src/app/(tabs)/` с адаптивным `_layout.tsx`
+(`<Sidebar>` при `width >= 768`, иначе `<BottomBar>`) и 5 именованными
+экранами; компоненты навигации в `src/components/navigation/`
+(`nav-items.ts`, `tab-trigger-button.tsx`, `sidebar.tsx`, `bottom-bar.tsx`);
+общий код вынесен в `src/lib/load-plan.ts` и
+`src/components/exercise-library-list.tsx`; `plan-ready.tsx` удалён, вход
+ведёт на `/home`; в `src/constants/theme.ts` добавлены токены
+`Radius`/`Elevation`, панели навигации на `expo-blur`.
+
+Отклонения от плана ниже (согласованы в ходе реализации):
+
+1. **Кастомные табы на `expo-router/ui`** вместо ручного свапа `<Tabs>` —
+   `_layout.tsx` рендерит `<Tabs>` из `expo-router/ui` со скрытым
+   `<TabList>` и сам выбирает `<Sidebar>`/`<BottomBar>` по ширине окна.
+2. **Иконки — `@expo/vector-icons` (Ionicons)** вместо `expo-symbols`:
+   у `expo-symbols` нет кроссплатформенного фолбэка (нужен на Android и
+   вебе). Нативные SF Symbols на iOS остаются в бэклоге.
+3. **Именованные экраны таб-группы** (`home.tsx`, `workouts.tsx`,
+   `nutrition.tsx`, `library.tsx`, `profile.tsx`) вместо `(tabs)/index.tsx`
+   — файл `(tabs)/index.tsx` дал бы URL `/` и столкнулся бы с корневым
+   `src/app/index.tsx` (экран выбора профиля).
+
 Это отвечает сразу на «дизайн не поменялся» и «выглядит слишком иишно» —
 сейчас всё ещё старый плоский роутинг и монохромная тема, ни то ни другое
 не переносилось никаким шагом раньше. Технически:
