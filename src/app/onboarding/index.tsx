@@ -65,7 +65,7 @@ export default function OnboardingScreen() {
     setError(null);
     try {
       await generateStubPlan(profileId, answers);
-      router.replace({ pathname: '/plan-ready', params: { profile: profileId } });
+      router.replace('/home');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не получилось построить план, попробуй ещё раз.');
       setSubmitting(false);

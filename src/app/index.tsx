@@ -33,7 +33,7 @@ export default function ProfilePickerScreen() {
       if (error) throw error;
 
       if (data) {
-        router.replace({ pathname: '/plan-ready', params: { profile: id } });
+        router.replace('/home');
       } else {
         router.replace({ pathname: '/onboarding', params: { profile: id } });
       }
