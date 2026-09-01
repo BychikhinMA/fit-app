@@ -4,7 +4,7 @@ export type NavItem = {
   /** Stable id, matches the <TabTrigger name> in the hidden TabList. */
   name: string;
   /** Route the TabList trigger points at. */
-  href: string;
+  href: import('expo-router').Href;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 };

@@ -15,6 +15,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding/index" />
         <Stack.Screen name="plan-ready" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="workout-day/[id]" />
         <Stack.Screen name="exercise-library/index" />
         <Stack.Screen name="exercise-library/[id]" />
