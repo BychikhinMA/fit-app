@@ -61,5 +61,23 @@ export const Spacing = {
   six: 64,
 } as const;
 
+/** Corner radii. Cards/large blocks use `card`; menu rows and small pills use `row`. */
+export const Radius = {
+  card: 20,
+  row: 14,
+  pill: 999,
+} as const;
+
+/** Soft, low-contrast lift for raised surfaces (cards, nav bars). */
+export const Elevation = {
+  card: {
+    shadowColor: '#000000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+} as const;
+
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
