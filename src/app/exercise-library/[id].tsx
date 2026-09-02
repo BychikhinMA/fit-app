@@ -129,11 +129,11 @@ export default function ExerciseDetailScreen() {
             <Pressable
               onPress={confirmReplace}
               disabled={saving}
-              style={[styles.confirmButton, { backgroundColor: theme.text }]}>
+              style={[styles.confirmButton, { backgroundColor: theme.accent }]}>
               {saving ? (
-                <ActivityIndicator color={theme.background} />
+                <ActivityIndicator color={theme.onAccent} />
               ) : (
-                <ThemedText type="smallBold" themeColor="background">
+                <ThemedText type="smallBold" themeColor="onAccent">
                   Выбрать это упражнение
                 </ThemedText>
               )}

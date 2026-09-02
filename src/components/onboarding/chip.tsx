@@ -21,13 +21,13 @@ export function Chip({
       style={[
         styles.chip,
         {
-          backgroundColor: selected ? theme.text : theme.backgroundElement,
-          borderColor: selected ? theme.text : theme.backgroundSelected,
+          backgroundColor: selected ? theme.accent : theme.backgroundElement,
+          borderColor: selected ? theme.accent : theme.backgroundSelected,
         },
       ]}>
       <ThemedText
         type="smallBold"
-        themeColor={selected ? 'background' : 'text'}>
+        themeColor={selected ? 'onAccent' : 'text'}>
         {label}
       </ThemedText>
     </Pressable>

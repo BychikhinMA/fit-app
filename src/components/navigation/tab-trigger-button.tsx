@@ -21,7 +21,8 @@ export const TabTriggerButton = forwardRef<View, TabTriggerButtonProps>(function
 ) {
   const theme = useTheme();
   const active = isFocused ?? false;
-  const tint = active ? theme.text : theme.textSecondary;
+  // Orange only as the icon tint; the active label stays `theme.text` (orange text on a light bg fails contrast).
+  const tint = active ? theme.accent : theme.textSecondary;
 
   if (variant === 'sidebar') {
     return (

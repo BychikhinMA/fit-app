@@ -11,16 +11,26 @@ export const Colors = {
   light: {
     text: '#000000',
     background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
+    backgroundElement: '#F5F5F5',
+    /** Light-orange tint for selected state (chip, active nav pill). */
+    backgroundSelected: '#FFE4CC',
     textSecondary: '#60646C',
+    /** Primary orange — CTA fills, active nav icon tint, progress. Fill/tint only, never text on a light bg. */
+    accent: '#FF7A1A',
+    /** Foreground on `accent` fills. Dark on purpose: #1A1A1A on #FF7A1A ≈ 6.7:1 (white would be 2.6:1). */
+    onAccent: '#1A1A1A',
+    /** Accent-coloured *text* on a light bg (e.g. linkPrimary). Darker than `accent`: #C2410C on white ≈ 5.2:1. */
+    accentText: '#C2410C',
   },
   dark: {
     text: '#ffffff',
     background: '#000000',
     backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
+    backgroundSelected: '#3A2412',
     textSecondary: '#B0B4BA',
+    accent: '#FF8A3D',
+    onAccent: '#000000',
+    accentText: '#FDBA74',
   },
 } as const;
 

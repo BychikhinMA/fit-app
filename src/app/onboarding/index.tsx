@@ -127,12 +127,12 @@ export default function OnboardingScreen() {
             style={[
               styles.button,
               styles.primaryButton,
-              { backgroundColor: canGoNext ? theme.text : theme.backgroundSelected },
+              { backgroundColor: canGoNext ? theme.accent : theme.backgroundElement },
             ]}>
             {submitting ? (
-              <ActivityIndicator color={theme.background} />
+              <ActivityIndicator color={theme.onAccent} />
             ) : (
-              <ThemedText type="smallBold" themeColor="background">
+              <ThemedText type="smallBold" themeColor={canGoNext ? 'onAccent' : 'textSecondary'}>
                 {isLastStep ? 'Построить план' : 'Далее'}
               </ThemedText>
             )}
