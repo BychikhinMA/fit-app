@@ -88,7 +88,19 @@
   `persistSession`/`autoRefreshToken` включены (были `false`, гостевой
   режим не нуждался в сессии; без этого вход разлогинивал бы при каждом
   перезапуске) — отклонение от буквального плана, см.
-  `roadmap-auth-ai-design.md`, «Шаг 4». По ходу найдены и починены два
+  `roadmap-auth-ai-design.md`, «Шаг 4». **2026-09-12, доп. фикс:** включение
+  `persistSession` вскрыло краш `ReferenceError: window is not defined` на
+  `npx expo start --web` (`web.output: "static"` в `app.json` — expo-router
+  рендерит каждый роут на Node-стороне до гидратации, а web-версия
+  `AsyncStorage` внутри читает `window.localStorage`). Починено передачей
+  `storage: Platform.OS === 'web' ? undefined : AsyncStorage` — на вебе
+  `@supabase/auth-js` сам определяет доступность `localStorage`
+  (`supportsLocalStorage()`) и на Node-стороне использует свой безопасный
+  in-memory фоллбэк, а в реальном браузере — настоящий `localStorage`;
+  на native всегда явно `AsyncStorage`. Проверено: все ключевые роуты
+  (`/`, `/login`, `/signup`, `/home`, `/onboarding`) отдают 200 без ошибок
+  в логе `expo start --web`; `npx tsc --noEmit`/`eslint` чистые. По ходу
+  найдены и починены два
   места с тем же хардкодом «только maksim/maria», что и в самом баге —
   `src/app/onboarding/index.tsx` (иначе онбординг реального пользователя
   зацикливался на экран выбора профиля) и все 4 таб-экрана (переведены на

@@ -408,6 +408,28 @@ build.nvidia.com), по прямой просьбе владельца прое�
    → `true`.** Не было явно в плане, но без этого сессия не переживала бы
    перезапуск приложения — вход по паролю разлогинивал бы пользователя
    каждый раз.
+   **2026-09-12, доп. фикс:** это включение вскрыло краш `ReferenceError:
+   window is not defined` на `npx expo start --web` — `app.json` имеет
+   `web.output: "static"`, expo-router рендерит каждый роут на Node-стороне
+   до гидратации в браузере, а web-реализация `AsyncStorage`
+   (`@react-native-async-storage/async-storage`) внутри синхронно читает
+   `window.localStorage` (см. `node_modules/@react-native-async-storage/
+   async-storage/lib/module/AsyncStorage.js`). Починено без кастомного
+   адаптера — передачей `storage: Platform.OS === 'web' ? undefined :
+   AsyncStorage`: у `@supabase/auth-js` уже есть встроенный safe-фоллбэк
+   именно под этот случай (если `storage` не передан явно, клиент сам
+   проверяет `supportsLocalStorage()`, которая возвращает `false` без
+   `window`/`document` и тогда использует свой in-memory адаптер — см.
+   `node_modules/@supabase/auth-js/src/GoTrueClient.ts` и
+   `src/lib/helpers.ts`). На Node-стороне сессии взяться неоткуда, in-memory
+   достаточно; в реальном браузере (гидратация — отдельное выполнение
+   модуля, `window` уже есть) используется настоящий `window.localStorage` —
+   сессия так же переживает перезапуск вкладки. На native `AsyncStorage`
+   передаётся явно, чтобы не потерять персистентность там. Проверено: все
+   ключевые роуты (`/`, `/login`, `/signup`, `/home`, `/onboarding`) отдают
+   200 без ошибок в логе `expo start --web`; `npx tsc --noEmit`/`eslint`
+   чистые. Живая проверка кликов в браузере (гостевой режим, вход/
+   регистрация) не выполнена — расширение Claude in Chrome не подключено.
 3. **Хардкод `'maksim' | 'maria'` был не только в `profile-storage.ts`
    (который план просил не трогать), но и напрямую в
    `src/app/onboarding/index.tsx`** (`params.profile === 'maksim' ||
