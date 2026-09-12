@@ -1,5 +1,8 @@
 @AGENTS.md
 
+В начале любой рабочей сессии с инструментами и результатом вызывай скилл
+task-observer перед началом работы.
+
 # Текущее состояние проекта (обновлено 2026-09-02)
 
 ## Готово и работает
@@ -113,6 +116,28 @@
   отключить обязательное подтверждение почты (иначе `signUp` не выдаст
   сессию сразу — экран регистрации это отрабатывает, но полный флоу без
   этого не проверить).
+- Impeccable-аудит и фиксы (2026-09-12): `/impeccable audit` (native/adaptive,
+  source-only) дал 12/20 (Acceptable), затем применены все 5 пунктов
+  Recommended Actions по порядку — `optimize` (`exercise-library-list.tsx`:
+  `ScrollView`+`.map()` по 741 упражнению заменён на `FlatList` с
+  `ListHeaderComponent`/`ItemSeparatorComponent`), `harden` (accessibility:
+  `accessibilityRole`/`Label`/`State` на табах навигации (`tab-trigger-
+  button.tsx`), чипах (`chip.tsx`), полях и кнопках входа/регистрации,
+  фото техники упражнения; добавлен токен `error` в `Colors.light`/`dark`
+  (`theme.ts`, с тем же комментарием про контраст, что и у остальных
+  токенов) взамен хардкода `#D64545`, дублированного в `login.tsx`/
+  `signup.tsx`/`onboarding/index.tsx`), `adapt` (`KeyboardAvoidingView` на
+  `login.tsx`/`signup.tsx`; `Chip` получил `minHeight: 44` под touch-target;
+  портрет-лок в `app.json` — намеренное решение: приложение используется
+  во время тренировки, альбомная ориентация не нужна), `polish` дважды
+  (новый `src/components/back-button.tsx` — Ionicons `chevron-back` +
+  подпись вместо юникод-стрелки «← Назад» в тексте, на всех 5 экранах,
+  где раньше была голая текстовая ссылка: `login.tsx`, `signup.tsx`,
+  `workout-day/[id].tsx`, `exercise-library/[id].tsx`, список из
+  `exercise-library-list.tsx`; финальный проход — `tsc`/`eslint` чистые).
+  Живая проверка на устройстве/симуляторе не выполнена (нет доступа к
+  simctl/adb в этой сессии) — accessibility (VoiceOver/TalkBack) и жест
+  edge-swipe-back не перепроверены руками, только на уровне кода.
 
 ## Roadmap дальше
 

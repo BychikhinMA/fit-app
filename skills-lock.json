@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "task-observer": {
+      "source": "iamneilroberts/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/task-observer/SKILL.md",
+      "computedHash": "cfa0cba34da461910a16dd412cbb8f406ad0c35c160d00cfbdace297aa7f7071"
+    }
+  }
+}

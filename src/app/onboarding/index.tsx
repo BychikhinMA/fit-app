@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
           )}
 
           {error && (
-            <ThemedText type="default" themeColor="text" style={styles.error}>
+            <ThemedText type="default" themeColor="error">
               {error}
             </ThemedText>
           )}
@@ -165,9 +165,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: Spacing.four,
     paddingBottom: Spacing.five,
-  },
-  error: {
-    color: '#D64545',
   },
   footer: {
     flexDirection: 'row',

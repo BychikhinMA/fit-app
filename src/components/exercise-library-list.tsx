@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { Chip } from '@/components/onboarding/chip';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -80,75 +81,90 @@ export function ExerciseLibraryList({ mode }: { mode: 'browse' | 'pick' }) {
     return 'Библиотека упражнений';
   }, [isPickMode, params.oldExerciseName]);
 
+  const listHeader = (
+    <View style={styles.header}>
+      {isPickMode && <BackButton onPress={() => router.back()} />}
+
+      <ThemedText type="title" style={styles.title}>
+        {headerTitle}
+      </ThemedText>
+
+      <ThemedText type="smallBold">Группа мышц</ThemedText>
+      <View style={styles.chipsRow}>
+        {Object.keys(MUSCLE_GROUP_MAP).map((group) => (
+          <Chip
+            key={group}
+            label={group}
+            selected={selectedMuscleGroup === group}
+            onPress={() => setSelectedMuscleGroup((prev) => (prev === group ? null : group))}
+          />
+        ))}
+      </View>
+
+      <ThemedText type="smallBold">Оборудование</ThemedText>
+      <View style={styles.chipsRow}>
+        {ALL_EQUIPMENT_TAGS.map((tag) => (
+          <Chip
+            key={tag}
+            label={tag}
+            selected={selectedEquipment.includes(tag)}
+            onPress={() => toggle(selectedEquipment, setSelectedEquipment, tag)}
+          />
+        ))}
+      </View>
+
+      {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
+
+      {!exercises && !error && (
+        <ActivityIndicator
+          color={theme.text}
+          style={styles.loader}
+          accessibilityLabel="Загрузка упражнений"
+        />
+      )}
+    </View>
+  );
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={isPickMode ? ['top', 'bottom'] : ['top']}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {isPickMode && (
-            <Pressable onPress={() => router.back()} style={styles.backButton}>
-              <ThemedText type="link" themeColor="textSecondary">
-                ← Назад
+        <FlatList
+          contentContainerStyle={styles.scrollContent}
+          data={exercises ?? []}
+          keyExtractor={(ex) => ex.id}
+          ListHeaderComponent={listHeader}
+          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+          ListEmptyComponent={
+            exercises && exercises.length === 0 ? (
+              <ThemedText themeColor="textSecondary">
+                Ничего не найдено под эти фильтры.
               </ThemedText>
+            ) : null
+          }
+          renderItem={({ item: ex }) => (
+            <Pressable
+              onPress={() => openExercise(ex.id)}
+              accessibilityRole="button"
+              accessibilityLabel={ex.name_ru}
+              style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
+              {ex.images[0] && (
+                <Image
+                  source={{ uri: ex.images[0] }}
+                  style={styles.thumb}
+                  contentFit="cover"
+                  importantForAccessibility="no"
+                  accessibilityElementsHidden
+                />
+              )}
+              <View style={styles.cardText}>
+                <ThemedText type="smallBold">{ex.name_ru}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {[ex.category_ru, ex.level_ru, ex.equipment_ru].filter(Boolean).join(' · ')}
+                </ThemedText>
+              </View>
             </Pressable>
           )}
-
-          <ThemedText type="title" style={styles.title}>
-            {headerTitle}
-          </ThemedText>
-
-          <ThemedText type="smallBold">Группа мышц</ThemedText>
-          <View style={styles.chipsRow}>
-            {Object.keys(MUSCLE_GROUP_MAP).map((group) => (
-              <Chip
-                key={group}
-                label={group}
-                selected={selectedMuscleGroup === group}
-                onPress={() =>
-                  setSelectedMuscleGroup((prev) => (prev === group ? null : group))
-                }
-              />
-            ))}
-          </View>
-
-          <ThemedText type="smallBold">Оборудование</ThemedText>
-          <View style={styles.chipsRow}>
-            {ALL_EQUIPMENT_TAGS.map((tag) => (
-              <Chip
-                key={tag}
-                label={tag}
-                selected={selectedEquipment.includes(tag)}
-                onPress={() => toggle(selectedEquipment, setSelectedEquipment, tag)}
-              />
-            ))}
-          </View>
-
-          {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
-
-          {!exercises && !error && <ActivityIndicator color={theme.text} style={styles.loader} />}
-
-          {exercises && exercises.length === 0 && (
-            <ThemedText themeColor="textSecondary">Ничего не найдено под эти фильтры.</ThemedText>
-          )}
-
-          <View style={styles.list}>
-            {exercises?.map((ex) => (
-              <Pressable
-                key={ex.id}
-                onPress={() => openExercise(ex.id)}
-                style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-                {ex.images[0] && (
-                  <Image source={{ uri: ex.images[0] }} style={styles.thumb} contentFit="cover" />
-                )}
-                <View style={styles.cardText}>
-                  <ThemedText type="smallBold">{ex.name_ru}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {[ex.category_ru, ex.level_ru, ex.equipment_ru].filter(Boolean).join(' · ')}
-                  </ThemedText>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+        />
       </SafeAreaView>
     </ThemedView>
   );
@@ -166,11 +182,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
   },
   scrollContent: {
-    gap: Spacing.three,
     paddingVertical: Spacing.four,
   },
-  backButton: {
-    alignSelf: 'flex-start',
+  header: {
+    gap: Spacing.three,
+    marginBottom: Spacing.three,
   },
   title: {
     marginBottom: Spacing.one,
@@ -185,8 +201,8 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: Spacing.four,
   },
-  list: {
-    gap: Spacing.two,
+  itemSeparator: {
+    height: Spacing.two,
   },
   card: {
     flexDirection: 'row',

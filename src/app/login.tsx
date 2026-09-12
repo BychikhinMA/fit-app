@@ -1,8 +1,17 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -46,64 +55,75 @@ export default function LoginScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ThemedText type="link" themeColor="textSecondary">
-            ← Назад
-          </ThemedText>
-        </Pressable>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            <BackButton onPress={() => router.back()} />
 
-        <ThemedText type="title" style={styles.title}>
-          Вход
-        </ThemedText>
-
-        <ThemedText type="smallBold">Email</ThemedText>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          placeholder="you@example.com"
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
-        />
-
-        <ThemedText type="smallBold">Пароль</ThemedText>
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password"
-          placeholder="••••••••"
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
-        />
-
-        {error && (
-          <ThemedText type="default" style={styles.error}>
-            {error}
-          </ThemedText>
-        )}
-
-        <Pressable
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-          style={[
-            styles.button,
-            { backgroundColor: canSubmit ? theme.accent : theme.backgroundElement },
-          ]}>
-          {submitting ? (
-            <ActivityIndicator color={theme.onAccent} />
-          ) : (
-            <ThemedText type="smallBold" themeColor={canSubmit ? 'onAccent' : 'textSecondary'}>
-              Войти
+            <ThemedText type="title" style={styles.title}>
+              Вход
             </ThemedText>
-          )}
-        </Pressable>
 
-        <Pressable onPress={() => router.push('/signup')} style={styles.linkRow}>
-          <ThemedText type="linkPrimary">Нет аккаунта? Зарегистрироваться</ThemedText>
-        </Pressable>
+            <ThemedText type="smallBold">Email</ThemedText>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              placeholder="you@example.com"
+              placeholderTextColor={theme.textSecondary}
+              accessibilityLabel="Email"
+              style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+            />
+
+            <ThemedText type="smallBold">Пароль</ThemedText>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="password"
+              placeholder="••••••••"
+              placeholderTextColor={theme.textSecondary}
+              accessibilityLabel="Пароль"
+              style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+            />
+
+            {error && (
+              <ThemedText type="default" style={{ color: theme.error }}>
+                {error}
+              </ThemedText>
+            )}
+
+            <Pressable
+              onPress={handleSubmit}
+              disabled={!canSubmit}
+              accessibilityRole="button"
+              accessibilityLabel="Войти"
+              accessibilityState={{ disabled: !canSubmit, busy: submitting }}
+              style={[
+                styles.button,
+                { backgroundColor: canSubmit ? theme.accent : theme.backgroundElement },
+              ]}>
+              {submitting ? (
+                <ActivityIndicator color={theme.onAccent} />
+              ) : (
+                <ThemedText type="smallBold" themeColor={canSubmit ? 'onAccent' : 'textSecondary'}>
+                  Войти
+                </ThemedText>
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.push('/signup')}
+              style={styles.linkRow}
+              accessibilityRole="link"
+              accessibilityLabel="Нет аккаунта? Зарегистрироваться">
+              <ThemedText type="linkPrimary">Нет аккаунта? Зарегистрироваться</ThemedText>
+            </Pressable>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -111,15 +131,15 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  flex: { flex: 1 },
   safeArea: {
     flex: 1,
     alignSelf: 'center',
     maxWidth: MaxContentWidth,
     width: '100%',
     paddingHorizontal: Spacing.four,
-    gap: Spacing.two,
   },
-  backButton: { alignSelf: 'flex-start' },
+  scrollContent: { gap: Spacing.two, flexGrow: 1 },
   title: { marginTop: Spacing.two, marginBottom: Spacing.two },
   input: {
     borderRadius: Radius.row,
@@ -127,7 +147,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     fontSize: 16,
   },
-  error: { color: '#D64545' },
   button: {
     marginTop: Spacing.three,
     paddingVertical: Spacing.three,

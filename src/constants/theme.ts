@@ -21,6 +21,8 @@ export const Colors = {
     onAccent: '#1A1A1A',
     /** Accent-coloured *text* on a light bg (e.g. linkPrimary). Darker than `accent`: #C2410C on white ≈ 5.2:1. */
     accentText: '#C2410C',
+    /** Error/validation text on a light bg: #B91C1C on white ≈ 6.5:1. */
+    error: '#B91C1C',
   },
   dark: {
     text: '#ffffff',
@@ -31,6 +33,8 @@ export const Colors = {
     accent: '#FF8A3D',
     onAccent: '#000000',
     accentText: '#FDBA74',
+    /** Error/validation text on a dark bg: #F87171 on black ≈ 7.6:1. */
+    error: '#F87171',
   },
 } as const;
 

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -86,11 +87,7 @@ export default function WorkoutDayScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <ThemedText type="link" themeColor="textSecondary">
-              ← Назад
-            </ThemedText>
-          </Pressable>
+          <BackButton onPress={() => router.back()} />
 
           <ThemedText type="title" style={styles.title}>
             {day.day_label}
@@ -137,7 +134,11 @@ export default function WorkoutDayScreen() {
                     <ThemedText type="small" themeColor="textSecondary" style={styles.exerciseCaption}>
                       {caption}
                     </ThemedText>
-                    <Pressable onPress={() => replaceExercise(ex)} hitSlop={8}>
+                    <Pressable
+                      onPress={() => replaceExercise(ex)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Заменить упражнение «${ex.exercise}»`}>
                       <ThemedText type="linkPrimary">Заменить</ThemedText>
                     </Pressable>
                   </View>
@@ -181,9 +182,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: Spacing.three,
     paddingVertical: Spacing.four,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
   },
   title: {
     marginBottom: Spacing.one,

@@ -30,6 +30,9 @@ export const TabTriggerButton = forwardRef<View, TabTriggerButtonProps>(function
         ref={ref}
         onPress={onPress}
         onLongPress={onLongPress}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: active }}
+        accessibilityLabel={label}
         style={[
           styles.sidebarRow,
           active && { backgroundColor: theme.backgroundSelected },
@@ -47,6 +50,9 @@ export const TabTriggerButton = forwardRef<View, TabTriggerButtonProps>(function
       ref={ref}
       onPress={onPress}
       onLongPress={onLongPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={label}
       style={styles.bottomItem}>
       <Ionicons name={icon} size={24} color={tint} />
       <ThemedText type="small" themeColor={active ? 'text' : 'textSecondary'} style={styles.bottomLabel}>

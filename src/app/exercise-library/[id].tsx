@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -78,16 +79,18 @@ export default function ExerciseDetailScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <ThemedText type="link" themeColor="textSecondary">
-              ← Назад
-            </ThemedText>
-          </Pressable>
+          <BackButton onPress={() => router.back()} />
 
           {exercise.images.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesRow}>
-              {exercise.images.map((uri) => (
-                <Image key={uri} source={{ uri }} style={styles.image} contentFit="cover" />
+              {exercise.images.map((uri, i) => (
+                <Image
+                  key={uri}
+                  source={{ uri }}
+                  style={styles.image}
+                  contentFit="cover"
+                  accessibilityLabel={`Техника выполнения «${exercise.name_ru}», фото ${i + 1} из ${exercise.images.length}`}
+                />
               ))}
             </ScrollView>
           )}
@@ -129,6 +132,9 @@ export default function ExerciseDetailScreen() {
             <Pressable
               onPress={confirmReplace}
               disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel="Выбрать это упражнение"
+              accessibilityState={{ disabled: saving, busy: saving }}
               style={[styles.confirmButton, { backgroundColor: theme.accent }]}>
               {saving ? (
                 <ActivityIndicator color={theme.onAccent} />
@@ -164,9 +170,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: Spacing.two,
     paddingVertical: Spacing.four,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
   },
   imagesRow: {
     marginTop: Spacing.two,
