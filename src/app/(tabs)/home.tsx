@@ -7,9 +7,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { getCurrentProfileId } from '@/lib/auth';
 import { BMI_DISCLAIMER } from '@/lib/health-calc';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
-import { getStoredProfileId } from '@/lib/profile-storage';
 import type { ProfileId } from '@/types/database';
 
 export default function HomeTab() {
@@ -19,8 +19,8 @@ export default function HomeTab() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getStoredProfileId().then((stored) => {
-      if (stored) setProfileId(stored);
+    getCurrentProfileId().then((current) => {
+      if (current) setProfileId(current);
       else router.replace('/');
     });
   }, []);

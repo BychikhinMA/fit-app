@@ -17,8 +17,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
-    autoRefreshToken: false,
-    persistSession: false,
+    // Шаг 4 (email+пароль): раньше оба флага были false — гостевой режим
+    // без логина не нуждался в сессии. Теперь сессия должна переживать
+    // перезапуск приложения и обновлять токен, иначе вход по паролю
+    // разлогинивал бы пользователя при каждом перезапуске.
+    autoRefreshToken: true,
+    persistSession: true,
     detectSessionInUrl: false,
   },
 });

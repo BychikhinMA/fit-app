@@ -68,6 +68,10 @@ export default function ProfilePickerScreen() {
             </Pressable>
           ))}
         </ThemedView>
+
+        <Pressable onPress={() => router.push('/login')} style={styles.loginLink}>
+          <ThemedText type="linkPrimary">Войти в свой аккаунт</ThemedText>
+        </Pressable>
       </SafeAreaView>
     </ThemedView>
   );
@@ -105,5 +109,8 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loginLink: {
+    alignItems: 'center',
   },
 });

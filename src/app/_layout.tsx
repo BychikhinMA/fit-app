@@ -13,6 +13,8 @@ export default function RootLayout() {
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
         <Stack.Screen name="onboarding/index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="workout-day/[id]" />

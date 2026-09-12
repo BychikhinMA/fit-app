@@ -9,10 +9,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { getCurrentProfileId } from '@/lib/auth';
 import { ONBOARDING_STEPS, type FieldConfig } from '@/lib/onboarding-steps';
 import { EMPTY_ANSWERS, type OnboardingAnswers } from '@/lib/onboarding-types';
 import { generateStubPlan } from '@/lib/plan-stub';
-import { getStoredProfileId } from '@/lib/profile-storage';
 import type { ProfileId } from '@/types/database';
 
 function isFieldFilled(field: FieldConfig, answers: OnboardingAnswers): boolean {
@@ -26,9 +26,7 @@ function isFieldFilled(field: FieldConfig, answers: OnboardingAnswers): boolean 
 export default function OnboardingScreen() {
   const theme = useTheme();
   const params = useLocalSearchParams<{ profile?: string }>();
-  const [profileId, setProfileId] = useState<ProfileId | null>(
-    params.profile === 'maksim' || params.profile === 'maria' ? params.profile : null
-  );
+  const [profileId, setProfileId] = useState<ProfileId | null>(params.profile || null);
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>(EMPTY_ANSWERS);
   const [submitting, setSubmitting] = useState(false);
@@ -36,8 +34,8 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     if (!profileId) {
-      getStoredProfileId().then((stored) => {
-        if (stored) setProfileId(stored);
+      getCurrentProfileId().then((current) => {
+        if (current) setProfileId(current);
         else router.replace('/');
       });
     }

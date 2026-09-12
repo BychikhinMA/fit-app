@@ -2,7 +2,11 @@
 // CLI supabase не подключён (нет линка к проекту), поэтому типы поддерживаются руками:
 // при изменении миграции — поправь и этот файл.
 
-export type ProfileId = 'maksim' | 'maria';
+// Раньше был жёсткий union 'maksim' | 'maria' (два гостевых профиля без
+// пароля). Шаг 4 добавил вход по email+паролю для любого числа людей —
+// у авторизованного профиля id это auth.users.id (uuid как text), поэтому
+// тип расширен до string.
+export type ProfileId = string;
 
 export type WarmupCooldownItem = { name: string; duration_or_reps: string };
 
@@ -30,8 +34,8 @@ export interface Database {
   public: {
     Tables: {
       profiles: Table<
-        { id: ProfileId; display_name: string; created_at: string },
-        { id: ProfileId; display_name: string; created_at?: string }
+        { id: ProfileId; display_name: string; owner_id: string | null; created_at: string },
+        { id: ProfileId; display_name: string; owner_id?: string | null; created_at?: string }
       >;
       profile_settings: Table<
         {

@@ -7,23 +7,36 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { clearStoredProfileId, getStoredProfileId } from '@/lib/profile-storage';
+import { getCurrentProfileId, signOut } from '@/lib/auth';
+import { clearStoredProfileId } from '@/lib/profile-storage';
+import { supabase } from '@/lib/supabase';
 import type { ProfileId } from '@/types/database';
-
-const DISPLAY_NAME: Record<ProfileId, string> = { maksim: 'Максим', maria: 'Мария' };
 
 export default function ProfileTab() {
   const theme = useTheme();
   const [profileId, setProfileId] = useState<ProfileId | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
-    getStoredProfileId().then((stored) => {
-      if (stored) setProfileId(stored);
+    getCurrentProfileId().then((current) => {
+      if (current) setProfileId(current);
       else router.replace('/');
     });
   }, []);
 
+  useEffect(() => {
+    if (!profileId) return;
+    supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', profileId)
+      .single()
+      .then(({ data }) => setDisplayName(data?.display_name ?? null));
+  }, [profileId]);
+
   async function switchProfile() {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) await signOut();
     await clearStoredProfileId();
     router.replace('/');
   }
@@ -40,9 +53,7 @@ export default function ProfileTab() {
             <ThemedText type="small" themeColor="textSecondary">
               Сейчас занимается
             </ThemedText>
-            <ThemedText type="subtitle">
-              {profileId ? DISPLAY_NAME[profileId] : '—'}
-            </ThemedText>
+            <ThemedText type="subtitle">{displayName ?? '—'}</ThemedText>
           </ThemedView>
 
           <ThemedView type="backgroundElement" style={styles.card}>
@@ -57,8 +68,8 @@ export default function ProfileTab() {
           </ThemedView>
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
-            Вход по email и паролю появится позже — пока приложение работает в
-            гостевом режиме (Максим / Мария).
+            «Сменить профиль» выходит из аккаунта (если ты вошёл по email) и
+            возвращает на экран выбора профиля.
           </ThemedText>
         </ScrollView>
       </SafeAreaView>
