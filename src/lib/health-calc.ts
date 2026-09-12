@@ -18,7 +18,12 @@ export type BmiResult = {
   category: 'недостаток веса' | 'норма' | 'избыток веса' | 'ожирение';
 };
 
-export function computeBmi(weightKg: number, heightCm: number): BmiResult {
+/** Returns `null` when weight/height are missing, zero, or negative — garbage in, no number out. */
+export function computeBmi(weightKg: number, heightCm: number): BmiResult | null {
+  if (!Number.isFinite(weightKg) || !Number.isFinite(heightCm) || weightKg <= 0 || heightCm <= 0) {
+    return null;
+  }
+
   const heightM = heightCm / 100;
   const value = Math.round((weightKg / (heightM * heightM)) * 10) / 10;
 
@@ -69,6 +74,7 @@ export type CalorieRecommendation = {
   carbs_g: number;
 };
 
+/** Returns `null` when age/height/weight are missing, zero, or negative — garbage in, no number out. */
 export function computeCalorieRecommendation(params: {
   gender: Gender;
   age: number;
@@ -76,8 +82,19 @@ export function computeCalorieRecommendation(params: {
   weightKg: number;
   activityLevel: ActivityLevel;
   goal: Goal;
-}): CalorieRecommendation {
+}): CalorieRecommendation | null {
   const { gender, age, heightCm, weightKg, activityLevel, goal } = params;
+
+  if (
+    !Number.isFinite(age) ||
+    !Number.isFinite(heightCm) ||
+    !Number.isFinite(weightKg) ||
+    age <= 0 ||
+    heightCm <= 0 ||
+    weightKg <= 0
+  ) {
+    return null;
+  }
 
   const bmr =
     10 * weightKg + 6.25 * heightCm - 5 * age + (gender === 'male' ? 5 : -161);

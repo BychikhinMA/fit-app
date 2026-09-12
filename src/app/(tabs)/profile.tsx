@@ -57,11 +57,17 @@ export default function ProfileTab() {
           </ThemedView>
 
           <ThemedView type="backgroundElement" style={styles.card}>
-            <Pressable onPress={switchProfile} style={styles.actionRow}>
+            <Pressable
+              onPress={switchProfile}
+              accessibilityRole="button"
+              accessibilityLabel="Сменить профиль"
+              style={styles.actionRow}>
               <ThemedText type="default">Сменить профиль</ThemedText>
             </Pressable>
             <Pressable
               onPress={() => router.push('/onboarding')}
+              accessibilityRole="button"
+              accessibilityLabel="Пройти онбординг заново"
               style={[styles.actionRow, { borderTopColor: theme.background, borderTopWidth: 1 }]}>
               <ThemedText type="default">Пройти онбординг заново</ThemedText>
             </Pressable>

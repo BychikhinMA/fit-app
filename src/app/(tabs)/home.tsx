@@ -55,6 +55,8 @@ export default function HomeTab() {
   const { settings, program, workoutDays } = data;
   const isStub = program?.generation_source === 'stub';
   const today = workoutDays[0];
+  const hasBmi = settings.bmi_value != null;
+  const hasCalories = settings.recommended_calories != null;
 
   return (
     <ThemedView style={styles.container}>
@@ -78,7 +80,9 @@ export default function HomeTab() {
 
           {today ? (
             <Pressable
-              onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: today.id } })}>
+              onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: today.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={`Открыть тренировку: ${today.day_label}`}>
               <ThemedView type="backgroundElement" style={styles.heroCard}>
                 <ThemedText type="smallBold" themeColor="accentText">
                   СЕГОДНЯ
@@ -97,35 +101,52 @@ export default function HomeTab() {
             </ThemedText>
           )}
 
-          <View style={styles.statsRow}>
-            <ThemedView type="backgroundElement" style={styles.statTile}>
-              <ThemedText type="small" themeColor="textSecondary">
-                ИМТ
-              </ThemedText>
-              <ThemedText type="subtitle">{settings.bmi_value}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {settings.bmi_category}
-              </ThemedText>
-            </ThemedView>
+          {(hasBmi || hasCalories) && (
+            <View style={styles.statsRow}>
+              {hasBmi && (
+                <ThemedView type="backgroundElement" style={styles.statTile}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    ИМТ
+                  </ThemedText>
+                  <ThemedText type="subtitle">{settings.bmi_value}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {settings.bmi_category}
+                  </ThemedText>
+                </ThemedView>
+              )}
 
-            <ThemedView type="backgroundElement" style={styles.statTile}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Калории
-              </ThemedText>
-              <ThemedText type="subtitle">{settings.recommended_calories}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                ккал/день
-              </ThemedText>
-            </ThemedView>
-          </View>
+              {hasCalories && (
+                <ThemedView type="backgroundElement" style={styles.statTile}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Калории
+                  </ThemedText>
+                  <ThemedText type="subtitle">{settings.recommended_calories}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    ккал/день
+                  </ThemedText>
+                </ThemedView>
+              )}
+            </View>
+          )}
 
-          <ThemedText type="small" themeColor="textSecondary">
-            Б {settings.calorie_protein_g} г · Ж {settings.calorie_fat_g} г · У{' '}
-            {settings.calorie_carbs_g} г · {settings.calorie_method}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {BMI_DISCLAIMER}
-          </ThemedText>
+          {(!hasBmi || !hasCalories) && (
+            <ThemedText type="small" themeColor="textSecondary">
+              Заполни онбординг полностью, чтобы увидеть{' '}
+              {!hasBmi && !hasCalories ? 'ИМТ и норму калорий' : !hasBmi ? 'ИМТ' : 'норму калорий'}.
+            </ThemedText>
+          )}
+
+          {hasCalories && (
+            <ThemedText type="small" themeColor="textSecondary">
+              Б {settings.calorie_protein_g} г · Ж {settings.calorie_fat_g} г · У{' '}
+              {settings.calorie_carbs_g} г · {settings.calorie_method}
+            </ThemedText>
+          )}
+          {hasBmi && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {BMI_DISCLAIMER}
+            </ThemedText>
+          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

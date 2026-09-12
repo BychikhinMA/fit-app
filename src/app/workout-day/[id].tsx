@@ -138,7 +138,8 @@ export default function WorkoutDayScreen() {
                       onPress={() => replaceExercise(ex)}
                       hitSlop={8}
                       accessibilityRole="button"
-                      accessibilityLabel={`Заменить упражнение «${ex.exercise}»`}>
+                      accessibilityLabel={`Заменить упражнение «${ex.exercise}»`}
+                      style={styles.replaceButton}>
                       <ThemedText type="linkPrimary">Заменить</ThemedText>
                     </Pressable>
                   </View>
@@ -215,4 +216,5 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   exerciseCaption: { flex: 1 },
+  replaceButton: { minHeight: 44, justifyContent: 'center' },
 });

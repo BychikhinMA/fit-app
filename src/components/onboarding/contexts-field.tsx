@@ -119,6 +119,7 @@ export function ContextsField({ answers, onChange }: Props) {
                   onChangeText={(text) => setFrequency(preset.name, text)}
                   placeholder="Как часто тут бываешь? Например: почти всегда / раз в месяц в командировках"
                   placeholderTextColor={theme.textSecondary}
+                  accessibilityLabel={`Как часто бываешь в контексте «${preset.name}»`}
                   style={[styles.input, { color: theme.text, backgroundColor: theme.background }]}
                 />
               </View>
@@ -146,6 +147,7 @@ export function ContextsField({ answers, onChange }: Props) {
             }
             placeholder="Что там доступно (через запятую)"
             placeholderTextColor={theme.textSecondary}
+            accessibilityLabel={`Доступное оборудование в контексте «${c.name}»`}
             style={[styles.input, { color: theme.text, backgroundColor: theme.background }]}
           />
           <TextInput
@@ -153,6 +155,7 @@ export function ContextsField({ answers, onChange }: Props) {
             onChangeText={(text) => setFrequency(c.name, text)}
             placeholder="Как часто тут бываешь?"
             placeholderTextColor={theme.textSecondary}
+            accessibilityLabel={`Как часто бываешь в контексте «${c.name}»`}
             style={[styles.input, { color: theme.text, backgroundColor: theme.background }]}
           />
         </ThemedView>
@@ -164,6 +167,7 @@ export function ContextsField({ answers, onChange }: Props) {
           onChangeText={setCustomName}
           placeholder="Свой вариант (например: улица/парк)"
           placeholderTextColor={theme.textSecondary}
+          accessibilityLabel="Название своего варианта места тренировки"
           style={[styles.input, styles.addInput, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
         <Chip

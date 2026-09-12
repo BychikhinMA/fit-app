@@ -70,6 +70,8 @@ export default function WorkoutsTab() {
                 <Pressable
                   key={day.id}
                   onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
                   style={[styles.dayRow, i > 0 && { borderTopColor: theme.background, borderTopWidth: 1 }]}>
                   <ThemedText type="default">{day.day_label}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">

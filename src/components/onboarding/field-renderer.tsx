@@ -30,6 +30,7 @@ export function FieldRenderer({ field, answers, onChange }: Props) {
           onChangeText={(text) => onChange(field.key, text as never)}
           placeholder={field.placeholder}
           placeholderTextColor={theme.textSecondary}
+          accessibilityLabel={field.label}
           style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
       )}
@@ -42,6 +43,7 @@ export function FieldRenderer({ field, answers, onChange }: Props) {
           placeholderTextColor={theme.textSecondary}
           multiline
           numberOfLines={3}
+          accessibilityLabel={field.label}
           style={[
             styles.input,
             styles.textarea,
@@ -60,6 +62,7 @@ export function FieldRenderer({ field, answers, onChange }: Props) {
           placeholder={field.placeholder}
           placeholderTextColor={theme.textSecondary}
           keyboardType="numeric"
+          accessibilityLabel={field.label}
           style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
       )}
