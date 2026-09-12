@@ -63,20 +63,18 @@ export default function WorkoutsTab() {
 
           {program ? (
             <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold">{program.name}</ThemedText>
-              {workoutDays.map((day) => (
+              <ThemedText type="smallBold" style={styles.programName}>
+                {program.name}
+              </ThemedText>
+              {workoutDays.map((day, i) => (
                 <Pressable
                   key={day.id}
                   onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
-                  style={styles.dayBlock}>
-                  <ThemedText type="default">
-                    {day.day_label} · {day.target_muscle_groups.join(', ')} · {day.default_context}
+                  style={[styles.dayRow, i > 0 && { borderTopColor: theme.background, borderTopWidth: 1 }]}>
+                  <ThemedText type="default">{day.day_label}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {day.target_muscle_groups.join(', ')} · {day.exercises.length} упражнений
                   </ThemedText>
-                  {day.exercises.map((ex) => (
-                    <ThemedText key={ex.id} type="small" themeColor="textSecondary">
-                      • {ex.exercise} — {ex.sets}×{ex.reps_or_time}
-                    </ThemedText>
-                  ))}
                 </Pressable>
               ))}
             </ThemedView>
@@ -109,8 +107,11 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.card,
     padding: Spacing.three,
-    gap: Spacing.one,
     ...Elevation.card,
   },
-  dayBlock: { gap: Spacing.half, marginTop: Spacing.two },
+  programName: { marginBottom: Spacing.one },
+  dayRow: {
+    paddingVertical: Spacing.two,
+    gap: Spacing.half,
+  },
 });

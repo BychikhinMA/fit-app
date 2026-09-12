@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { ALL_EQUIPMENT_TAGS, ALL_MUSCLE_TAGS, MUSCLE_GROUP_MAP } from '@/lib/muscle-group-map';
+import { ALL_EQUIPMENT_TAGS, MUSCLE_GROUP_MAP } from '@/lib/muscle-group-map';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
@@ -27,8 +27,8 @@ export function ExerciseLibraryList({ mode }: { mode: 'browse' | 'pick' }) {
     muscleGroup?: string;
   }>();
 
-  const [selectedMuscles, setSelectedMuscles] = useState<string[]>(
-    () => (isPickMode ? MUSCLE_GROUP_MAP[params.muscleGroup ?? ''] ?? [] : [])
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(
+    () => (isPickMode ? params.muscleGroup || null : null)
   );
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [exercises, setExercises] = useState<LibraryExercise[] | null>(null);
@@ -42,7 +42,8 @@ export function ExerciseLibraryList({ mode }: { mode: 'browse' | 'pick' }) {
         .from('exercise_library')
         .select('id, name_ru, category_ru, level_ru, equipment_ru, primary_muscles_ru, images')
         .order('name_ru');
-      if (selectedMuscles.length > 0) query = query.overlaps('primary_muscles_ru', selectedMuscles);
+      const muscleTags = selectedMuscleGroup ? MUSCLE_GROUP_MAP[selectedMuscleGroup] ?? [] : [];
+      if (muscleTags.length > 0) query = query.overlaps('primary_muscles_ru', muscleTags);
       if (selectedEquipment.length > 0) query = query.in('equipment_ru', selectedEquipment);
 
       const { data, error: loadError } = await query;
@@ -54,7 +55,7 @@ export function ExerciseLibraryList({ mode }: { mode: 'browse' | 'pick' }) {
     return () => {
       cancelled = true;
     };
-  }, [selectedMuscles, selectedEquipment]);
+  }, [selectedMuscleGroup, selectedEquipment]);
 
   function toggle(list: string[], setList: (v: string[]) => void, value: string) {
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -97,12 +98,14 @@ export function ExerciseLibraryList({ mode }: { mode: 'browse' | 'pick' }) {
 
           <ThemedText type="smallBold">Группа мышц</ThemedText>
           <View style={styles.chipsRow}>
-            {ALL_MUSCLE_TAGS.map((tag) => (
+            {Object.keys(MUSCLE_GROUP_MAP).map((group) => (
               <Chip
-                key={tag}
-                label={tag}
-                selected={selectedMuscles.includes(tag)}
-                onPress={() => toggle(selectedMuscles, setSelectedMuscles, tag)}
+                key={group}
+                label={group}
+                selected={selectedMuscleGroup === group}
+                onPress={() =>
+                  setSelectedMuscleGroup((prev) => (prev === group ? null : group))
+                }
               />
             ))}
           </View>

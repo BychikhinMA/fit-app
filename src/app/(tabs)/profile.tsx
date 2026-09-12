@@ -37,23 +37,24 @@ export default function ProfileTab() {
           </ThemedText>
 
           <ThemedView type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">Сейчас занимается</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Сейчас занимается
+            </ThemedText>
             <ThemedText type="subtitle">
               {profileId ? DISPLAY_NAME[profileId] : '—'}
             </ThemedText>
           </ThemedView>
 
-          <Pressable
-            onPress={switchProfile}
-            style={[styles.button, { backgroundColor: theme.backgroundElement }]}>
-            <ThemedText type="smallBold">Сменить профиль</ThemedText>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push('/onboarding')}
-            style={[styles.button, { backgroundColor: theme.backgroundElement }]}>
-            <ThemedText type="smallBold">Пройти онбординг заново</ThemedText>
-          </Pressable>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <Pressable onPress={switchProfile} style={styles.actionRow}>
+              <ThemedText type="default">Сменить профиль</ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/onboarding')}
+              style={[styles.actionRow, { borderTopColor: theme.background, borderTopWidth: 1 }]}>
+              <ThemedText type="default">Пройти онбординг заново</ThemedText>
+            </Pressable>
+          </ThemedView>
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
             Вход по email и паролю появится позже — пока приложение работает в
@@ -82,10 +83,8 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     ...Elevation.card,
   },
-  button: {
-    paddingVertical: Spacing.three,
-    borderRadius: Radius.card,
-    alignItems: 'center',
+  actionRow: {
+    paddingVertical: Spacing.two,
   },
   note: { marginTop: Spacing.two },
 });

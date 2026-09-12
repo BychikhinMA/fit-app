@@ -110,27 +110,41 @@ export default function WorkoutDayScreen() {
             </ThemedView>
           )}
 
-          <View style={styles.exercisesList}>
-            {exercises.map((ex) => (
-              <ThemedView key={ex.id} type="backgroundElement" style={styles.exerciseCard}>
-                <ThemedText type="smallBold">{ex.exercise}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {ex.sets}×{ex.reps_or_time}
-                  {ex.rest_seconds ? ` · отдых ${ex.rest_seconds} сек` : ''}
-                </ThemedText>
-                {ex.progression_note && (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {ex.progression_note}
-                  </ThemedText>
-                )}
-                <Pressable
-                  onPress={() => replaceExercise(ex)}
-                  style={[styles.replaceButton, { backgroundColor: theme.backgroundSelected }]}>
-                  <ThemedText type="smallBold">Заменить</ThemedText>
-                </Pressable>
-              </ThemedView>
-            ))}
-          </View>
+          <ThemedView type="backgroundElement" style={styles.exercisesCard}>
+            {exercises.map((ex, i) => {
+              const caption = [
+                ex.rest_seconds ? `отдых ${ex.rest_seconds} сек` : null,
+                ex.progression_note,
+              ]
+                .filter(Boolean)
+                .join(' · ');
+              return (
+                <View
+                  key={ex.id}
+                  style={[
+                    styles.exerciseRow,
+                    i > 0 && { borderTopColor: theme.background, borderTopWidth: 1 },
+                  ]}>
+                  <View style={styles.exerciseHeadline}>
+                    <ThemedText type="default" style={styles.exerciseName}>
+                      {ex.exercise}
+                    </ThemedText>
+                    <ThemedText type="smallBold">
+                      {ex.sets}×{ex.reps_or_time}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.exerciseFootline}>
+                    <ThemedText type="small" themeColor="textSecondary" style={styles.exerciseCaption}>
+                      {caption}
+                    </ThemedText>
+                    <Pressable onPress={() => replaceExercise(ex)} hitSlop={8}>
+                      <ThemedText type="linkPrimary">Заменить</ThemedText>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </ThemedView>
 
           {day.cooldown.length > 0 && (
             <ThemedView type="backgroundElement" style={styles.card}>
@@ -180,20 +194,27 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     ...Elevation.card,
   },
-  exercisesList: {
-    gap: Spacing.two,
-  },
-  exerciseCard: {
+  exercisesCard: {
     borderRadius: Radius.card,
-    padding: Spacing.three,
-    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
     ...Elevation.card,
   },
-  replaceButton: {
-    marginTop: Spacing.two,
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Radius.pill,
+  exerciseRow: {
+    paddingVertical: Spacing.three,
+    gap: Spacing.half,
   },
+  exerciseHeadline: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: Spacing.two,
+  },
+  exerciseName: { flex: 1 },
+  exerciseFootline: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  exerciseCaption: { flex: 1 },
 });

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -63,11 +63,21 @@ export default function NutritionTab() {
 
           {mealPlan ? (
             <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold">Пример дня питания</ThemedText>
-              {meals.map((meal) => (
-                <ThemedText key={meal.id} type="small" themeColor="textSecondary">
-                  • {meal.name} — {meal.calories} ккал (Б{meal.protein_g}/Ж{meal.fat_g}/У{meal.carbs_g})
-                </ThemedText>
+              <ThemedText type="smallBold" style={styles.planName}>
+                Пример дня питания
+              </ThemedText>
+              {meals.map((meal, i) => (
+                <View
+                  key={meal.id}
+                  style={[styles.mealRow, i > 0 && { borderTopColor: theme.background, borderTopWidth: 1 }]}>
+                  <View style={styles.mealText}>
+                    <ThemedText type="default">{meal.name}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Б{meal.protein_g} · Ж{meal.fat_g} · У{meal.carbs_g}
+                    </ThemedText>
+                  </View>
+                  <ThemedText type="smallBold">{meal.calories} ккал</ThemedText>
+                </View>
               ))}
             </ThemedView>
           ) : (
@@ -99,7 +109,15 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.card,
     padding: Spacing.three,
-    gap: Spacing.one,
     ...Elevation.card,
   },
+  planName: { marginBottom: Spacing.one },
+  mealRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.two,
+    gap: Spacing.two,
+  },
+  mealText: { flex: 1, gap: Spacing.half },
 });

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -65,61 +65,67 @@ export default function HomeTab() {
           </ThemedText>
 
           {isStub && (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold">Это черновик, не настоящий ИИ-план</ThemedText>
+            <ThemedView type="backgroundSelected" style={styles.notice}>
+              <ThemedText type="smallBold" themeColor="accentText">
+                Черновик плана
+              </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Ключ Claude API ещё не подключён, поэтому программа тренировок и питания —
-                упрощённая заглушка. ИМТ и норма калорий посчитаны по-настоящему. Как только
-                появится ключ, план перегенерируется настоящим ИИ по тем же ответам.
+                Ключ ИИ ещё не подключён, поэтому программа и питание — упрощённая заглушка. ИМТ и
+                норма калорий посчитаны по-настоящему.
               </ThemedText>
             </ThemedView>
           )}
-
-          <ThemedView type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">ИМТ</ThemedText>
-            <ThemedText type="subtitle">
-              {settings.bmi_value} · {settings.bmi_category}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {BMI_DISCLAIMER}
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedView type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">Норма калорий и БЖУ</ThemedText>
-            <ThemedText type="subtitle">{settings.recommended_calories} ккал/день</ThemedText>
-            <ThemedText type="default">
-              Белки {settings.calorie_protein_g} г · Жиры {settings.calorie_fat_g} г · Углеводы{' '}
-              {settings.calorie_carbs_g} г
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {settings.calorie_method}
-            </ThemedText>
-          </ThemedView>
 
           {today ? (
             <Pressable
               onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: today.id } })}>
-              <ThemedView type="backgroundElement" style={styles.card}>
-                <ThemedText type="smallBold">План на сегодня</ThemedText>
-                <ThemedText type="default">
-                  {today.day_label} · {today.target_muscle_groups.join(', ')} · {today.default_context}
+              <ThemedView type="backgroundElement" style={styles.heroCard}>
+                <ThemedText type="smallBold" themeColor="accentText">
+                  СЕГОДНЯ
                 </ThemedText>
-                {today.exercises.map((ex) => (
-                  <ThemedText key={ex.id} type="small" themeColor="textSecondary">
-                    • {ex.exercise} — {ex.sets}×{ex.reps_or_time}
-                  </ThemedText>
-                ))}
+                <ThemedText type="subtitle">{today.day_label}</ThemedText>
+                <ThemedText type="default" themeColor="textSecondary">
+                  {today.target_muscle_groups.join(', ')} · {today.exercises.length} упражнений
+                </ThemedText>
+                <ThemedText type="linkPrimary">Открыть тренировку →</ThemedText>
               </ThemedView>
             </Pressable>
           ) : (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold">План ещё не построен</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              План ещё не построен — пройди онбординг во вкладке «Профиль», чтобы получить
+              программу.
+            </ThemedText>
+          )}
+
+          <View style={styles.statsRow}>
+            <ThemedView type="backgroundElement" style={styles.statTile}>
               <ThemedText type="small" themeColor="textSecondary">
-                Пройди онбординг во вкладке «Профиль», чтобы получить программу.
+                ИМТ
+              </ThemedText>
+              <ThemedText type="subtitle">{settings.bmi_value}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {settings.bmi_category}
               </ThemedText>
             </ThemedView>
-          )}
+
+            <ThemedView type="backgroundElement" style={styles.statTile}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Калории
+              </ThemedText>
+              <ThemedText type="subtitle">{settings.recommended_calories}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                ккал/день
+              </ThemedText>
+            </ThemedView>
+          </View>
+
+          <ThemedText type="small" themeColor="textSecondary">
+            Б {settings.calorie_protein_g} г · Ж {settings.calorie_fat_g} г · У{' '}
+            {settings.calorie_carbs_g} г · {settings.calorie_method}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {BMI_DISCLAIMER}
+          </ThemedText>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -138,10 +144,26 @@ const styles = StyleSheet.create({
   },
   scrollContent: { gap: Spacing.three, paddingVertical: Spacing.four },
   title: { marginBottom: Spacing.two },
-  card: {
+  notice: {
     borderRadius: Radius.card,
     padding: Spacing.three,
+    gap: Spacing.half,
+  },
+  heroCard: {
+    borderRadius: Radius.card,
+    padding: Spacing.four,
     gap: Spacing.one,
+    ...Elevation.card,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  statTile: {
+    flex: 1,
+    borderRadius: Radius.card,
+    padding: Spacing.three,
+    gap: Spacing.half,
     ...Elevation.card,
   },
 });
