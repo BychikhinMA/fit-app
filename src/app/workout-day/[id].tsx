@@ -1,9 +1,10 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BackButton } from '@/components/back-button';
+import { Chip } from '@/components/onboarding/chip';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -20,6 +21,19 @@ export default function WorkoutDayScreen() {
   const [day, setDay] = useState<WorkoutDay | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [selectedContext, setSelectedContext] = useState<string | null>(null);
+
+  // Все контексты, реально встречающиеся у упражнений этого дня, плюс дефолтный день.
+  const contexts = useMemo(() => {
+    const set = new Set<string>();
+    if (day?.default_context) set.add(day.default_context);
+    exercises.forEach((ex) => {
+      ex.context_variants.forEach((v) => set.add(v.context_name));
+    });
+    return [...set];
+  }, [day, exercises]);
+
+  const activeContext = selectedContext ?? day?.default_context ?? null;
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -33,6 +47,7 @@ export default function WorkoutDayScreen() {
       return;
     }
     setDay(dayData);
+    setSelectedContext(null);
 
     const { data: exercisesData, error: exercisesError } = await supabase
       .from('exercises')
@@ -96,6 +111,19 @@ export default function WorkoutDayScreen() {
             {day.target_muscle_groups.join(', ')} · {day.default_context}
           </ThemedText>
 
+          {contexts.length > 1 && (
+            <View style={styles.contextRow}>
+              {contexts.map((context) => (
+                <Chip
+                  key={context}
+                  label={context}
+                  selected={context === activeContext}
+                  onPress={() => setSelectedContext(context)}
+                />
+              ))}
+            </View>
+          )}
+
           {day.warmup.length > 0 && (
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">Разминка</ThemedText>
@@ -109,12 +137,17 @@ export default function WorkoutDayScreen() {
 
           <ThemedView type="backgroundElement" style={styles.exercisesCard}>
             {exercises.map((ex, i) => {
-              const caption = [
-                ex.rest_seconds ? `отдых ${ex.rest_seconds} сек` : null,
-                ex.progression_note,
-              ]
-                .filter(Boolean)
-                .join(' · ');
+              const variant =
+                activeContext && activeContext !== day.default_context
+                  ? ex.context_variants.find((v) => v.context_name === activeContext)
+                  : undefined;
+              const caption = variant
+                ? [variant.exercise_variant, variant.equipment_used ? `инвентарь: ${variant.equipment_used}` : null]
+                    .filter(Boolean)
+                    .join(' · ')
+                : [ex.rest_seconds ? `отдых ${ex.rest_seconds} сек` : null, ex.progression_note]
+                    .filter(Boolean)
+                    .join(' · ');
               return (
                 <View
                   key={ex.id}
@@ -186,6 +219,11 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing.one,
+  },
+  contextRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.one,
   },
   card: {
     borderRadius: Radius.card,

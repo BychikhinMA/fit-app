@@ -172,6 +172,7 @@ export async function generateStubPlan(profileId: ProfileId, answers: Onboarding
         warmup: [{ name: 'Разминка суставов', duration_or_reps: '5 минут' }],
         cooldown: [{ name: 'Растяжка целевых мышц', duration_or_reps: '5 минут' }],
         sort_order: day,
+        weekday: day % 7,
       })
       .select()
       .single();

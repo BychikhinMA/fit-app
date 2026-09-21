@@ -1,12 +1,19 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DayView } from '@/components/calendar/day-view';
+import { MonthView } from '@/components/calendar/month-view';
+import { QuarterView } from '@/components/calendar/quarter-view';
+import { ScaleSwitcher } from '@/components/calendar/scale-switcher';
+import { WeekView } from '@/components/calendar/week-view';
+import { YearView } from '@/components/calendar/year-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { type CalendarScale, shiftAnchor } from '@/lib/calendar-dates';
 import { getCurrentProfileId } from '@/lib/auth';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
 import type { ProfileId } from '@/types/database';
@@ -16,6 +23,8 @@ export default function WorkoutsTab() {
   const [profileId, setProfileId] = useState<ProfileId | null>(null);
   const [data, setData] = useState<PlanData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scale, setScale] = useState<CalendarScale>('week');
+  const [anchor, setAnchor] = useState(() => new Date());
 
   useEffect(() => {
     getCurrentProfileId().then((current) => {
@@ -30,6 +39,15 @@ export default function WorkoutsTab() {
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [profileId]);
+
+  function handleNavigate(direction: 1 | -1) {
+    setAnchor((prev) => shiftAnchor(prev, scale, direction));
+  }
+
+  function handleSelectMonth(monthStart: Date) {
+    setScale('month');
+    setAnchor(monthStart);
+  }
 
   if (error) {
     return (
@@ -63,22 +81,25 @@ export default function WorkoutsTab() {
 
           {program ? (
             <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold" style={styles.programName}>
-                {program.name}
-              </ThemedText>
-              {workoutDays.map((day, i) => (
-                <Pressable
-                  key={day.id}
-                  onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
-                  style={[styles.dayRow, i > 0 && { borderTopColor: theme.background, borderTopWidth: 1 }]}>
-                  <ThemedText type="default">{day.day_label}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {day.target_muscle_groups.join(', ')} · {day.exercises.length} упражнений
-                  </ThemedText>
-                </Pressable>
-              ))}
+              <ThemedText type="smallBold">{program.name}</ThemedText>
+
+              <ScaleSwitcher
+                scale={scale}
+                onScaleChange={setScale}
+                anchor={anchor}
+                onNavigate={handleNavigate}
+                onToday={() => setAnchor(new Date())}
+              />
+
+              {scale === 'day' && <DayView anchor={anchor} workoutDays={workoutDays} />}
+              {scale === 'week' && <WeekView anchor={anchor} workoutDays={workoutDays} />}
+              {scale === 'month' && <MonthView anchor={anchor} workoutDays={workoutDays} />}
+              {scale === 'quarter' && (
+                <QuarterView anchor={anchor} workoutDays={workoutDays} onSelectMonth={handleSelectMonth} />
+              )}
+              {scale === 'year' && (
+                <YearView anchor={anchor} workoutDays={workoutDays} onSelectMonth={handleSelectMonth} />
+              )}
             </ThemedView>
           ) : (
             <ThemedView type="backgroundElement" style={styles.card}>
@@ -109,11 +130,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.card,
     padding: Spacing.three,
+    gap: Spacing.three,
     ...Elevation.card,
-  },
-  programName: { marginBottom: Spacing.one },
-  dayRow: {
-    paddingVertical: Spacing.two,
-    gap: Spacing.half,
   },
 });

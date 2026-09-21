@@ -185,6 +185,8 @@ export interface Database {
           warmup: WarmupCooldownItem[];
           cooldown: WarmupCooldownItem[];
           sort_order: number;
+          /** 0 = понедельник .. 6 = воскресенье, nullable. Повторяется еженедельно, без даты окончания. */
+          weekday: number | null;
         },
         {
           id?: string;
@@ -195,6 +197,7 @@ export interface Database {
           warmup?: WarmupCooldownItem[];
           cooldown?: WarmupCooldownItem[];
           sort_order?: number;
+          weekday?: number | null;
         }
       >;
       exercises: Table<
