@@ -1,11 +1,23 @@
 {
   "version": 1,
   "skills": {
+    "apple-design": {
+      "source": "dickwu/apple-design-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "2d61ea262429ac7a02a2694dfabda4bd202ada3c8c23cd0fc4ef9eb9e512d235"
+    },
     "task-observer": {
       "source": "iamneilroberts/claude-skills",
       "sourceType": "github",
       "skillPath": "skills/task-observer/SKILL.md",
       "computedHash": "cfa0cba34da461910a16dd412cbb8f406ad0c35c160d00cfbdace297aa7f7071"
+    },
+    "unlazy": {
+      "source": "Leonxlnx/unlazy",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "7fcb511111a6d234d56dc1d9d38e0ae754c1762945ad7cd26679e799ee5e64ed"
     }
   }
 }

@@ -42,3 +42,8 @@ example
 # generated native folders
 /ios
 /android
+
+# npx skills (agent-skill installer) - local experimentation, not committed
+.agents/skills/unlazy/
+.claude/skills/unlazy
+.claude/skills/apple-design/
