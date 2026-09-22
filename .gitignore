@@ -47,3 +47,9 @@ example
 .agents/skills/unlazy/
 .claude/skills/unlazy
 .claude/skills/apple-design/
+
+# Claude Code - personal, machine-specific
+.claude/settings.local.json
+
+# task-observer skill log
+skill-observations/
