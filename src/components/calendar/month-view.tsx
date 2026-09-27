@@ -4,7 +4,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { WEEKDAY_SHORT, findWorkoutForDate, formatDayLabel, getMonthGrid, isSameDay } from '@/lib/calendar-dates';
+import {
+  WEEKDAY_SHORT,
+  findWorkoutForDate,
+  formatDayLabel,
+  getMonthGrid,
+  isSameDay,
+  toISODate,
+} from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
@@ -59,7 +66,9 @@ export function MonthView({
             return (
               <Pressable
                 key={di}
-                onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
+                onPress={() =>
+                  router.push({ pathname: '/workout-day/[id]', params: { id: day.id, date: toISODate(date) } })
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`${formatDayLabel(date)} — Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
                 style={[
