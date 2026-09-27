@@ -9,9 +9,17 @@ import type { PlanData } from '@/lib/load-plan';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
-export function DayView({ anchor, workoutDays }: { anchor: Date; workoutDays: WorkoutDayEntry[] }) {
+export function DayView({
+  anchor,
+  workoutDays,
+  exceptions,
+}: {
+  anchor: Date;
+  workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
+}) {
   const theme = useTheme();
-  const day = findWorkoutForDate(workoutDays, anchor);
+  const day = findWorkoutForDate(workoutDays, anchor, exceptions);
 
   return (
     <View style={styles.container}>

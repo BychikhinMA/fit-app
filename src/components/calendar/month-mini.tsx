@@ -11,10 +11,12 @@ type WorkoutDayEntry = PlanData['workoutDays'][number];
 export function MonthMini({
   monthStart,
   workoutDays,
+  exceptions,
   onSelect,
 }: {
   monthStart: Date;
   workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
   onSelect: (monthStart: Date) => void;
 }) {
   const theme = useTheme();
@@ -40,7 +42,7 @@ export function MonthMini({
           <View key={wi} style={styles.weekRow}>
             {week.map((date, di) => {
               const inMonth = date.getMonth() === monthStart.getMonth();
-              const day = inMonth ? findWorkoutForDate(workoutDays, date) : undefined;
+              const day = inMonth ? findWorkoutForDate(workoutDays, date, exceptions) : undefined;
               return (
                 <View key={di} style={styles.miniCell}>
                   {day && <View style={[styles.miniDot, { backgroundColor: theme.accent }]} />}

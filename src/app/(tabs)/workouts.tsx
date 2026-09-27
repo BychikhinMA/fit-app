@@ -69,7 +69,7 @@ export default function WorkoutsTab() {
     );
   }
 
-  const { program, workoutDays } = data;
+  const { program, workoutDays, exceptions } = data;
 
   return (
     <ThemedView style={styles.container}>
@@ -91,14 +91,24 @@ export default function WorkoutsTab() {
                 onToday={() => setAnchor(new Date())}
               />
 
-              {scale === 'day' && <DayView anchor={anchor} workoutDays={workoutDays} />}
-              {scale === 'week' && <WeekView anchor={anchor} workoutDays={workoutDays} />}
-              {scale === 'month' && <MonthView anchor={anchor} workoutDays={workoutDays} />}
+              {scale === 'day' && <DayView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
+              {scale === 'week' && <WeekView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
+              {scale === 'month' && <MonthView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
               {scale === 'quarter' && (
-                <QuarterView anchor={anchor} workoutDays={workoutDays} onSelectMonth={handleSelectMonth} />
+                <QuarterView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  onSelectMonth={handleSelectMonth}
+                />
               )}
               {scale === 'year' && (
-                <YearView anchor={anchor} workoutDays={workoutDays} onSelectMonth={handleSelectMonth} />
+                <YearView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  onSelectMonth={handleSelectMonth}
+                />
               )}
             </ThemedView>
           ) : (

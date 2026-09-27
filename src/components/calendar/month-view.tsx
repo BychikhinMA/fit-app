@@ -9,7 +9,15 @@ import type { PlanData } from '@/lib/load-plan';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
-export function MonthView({ anchor, workoutDays }: { anchor: Date; workoutDays: WorkoutDayEntry[] }) {
+export function MonthView({
+  anchor,
+  workoutDays,
+  exceptions,
+}: {
+  anchor: Date;
+  workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
+}) {
   const theme = useTheme();
   const today = new Date();
   const weeks = getMonthGrid(anchor);
@@ -28,7 +36,7 @@ export function MonthView({ anchor, workoutDays }: { anchor: Date; workoutDays: 
         <View key={wi} style={styles.weekRow}>
           {week.map((date, di) => {
             const inMonth = date.getMonth() === anchor.getMonth();
-            const day = findWorkoutForDate(workoutDays, date);
+            const day = findWorkoutForDate(workoutDays, date, exceptions);
             const today_ = isSameDay(date, today);
             const dateLabel = date.getDate();
 

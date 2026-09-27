@@ -9,7 +9,15 @@ import type { PlanData } from '@/lib/load-plan';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
-export function WeekView({ anchor, workoutDays }: { anchor: Date; workoutDays: WorkoutDayEntry[] }) {
+export function WeekView({
+  anchor,
+  workoutDays,
+  exceptions,
+}: {
+  anchor: Date;
+  workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
+}) {
   const theme = useTheme();
   const today = new Date();
   const weekDates = getWeekDates(anchor);
@@ -17,7 +25,7 @@ export function WeekView({ anchor, workoutDays }: { anchor: Date; workoutDays: W
   return (
     <View style={styles.row}>
       {weekDates.map((date, i) => {
-        const day = findWorkoutForDate(workoutDays, date);
+        const day = findWorkoutForDate(workoutDays, date, exceptions);
         const dateLabel = date.getDate();
         const today_ = isSameDay(date, today);
 
