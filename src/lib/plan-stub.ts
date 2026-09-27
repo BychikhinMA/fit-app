@@ -130,6 +130,11 @@ export async function generateStubPlan(profileId: ProfileId, answers: Onboarding
     answers.contexts.find((c) => c.name === 'Дом')?.name ?? answers.contexts[0]?.name ?? 'Дом';
   const otherContexts = answers.contexts.map((c) => c.name).filter((n) => n !== defaultContext);
 
+  // Исключения переноса тренировок — без этого старые cancelled-записи
+  // переживут пересборку плана и молча погасят тренировки в новом плане
+  // на тех же датах (см. docs/superpowers/specs/2026-09-22-workout-reschedule-design.md).
+  await supabase.from('workout_day_exceptions').delete().eq('profile_id', profileId);
+
   // 5. Черновая программа тренировок (заглушка вместо плана от Claude).
   await supabase.from('programs').delete().eq('profile_id', profileId);
   const { data: program, error: programError } = await supabase
