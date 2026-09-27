@@ -7,11 +7,13 @@ type WorkoutDay = Database['public']['Tables']['workout_days']['Row'];
 type Exercise = Database['public']['Tables']['exercises']['Row'];
 type MealPlan = Database['public']['Tables']['meal_plans']['Row'];
 type Meal = Database['public']['Tables']['meals']['Row'];
+type WorkoutDayExceptionRow = Database['public']['Tables']['workout_day_exceptions']['Row'];
 
 export type PlanData = {
   settings: ProfileSettings;
   program: Program | null;
   workoutDays: (WorkoutDay & { exercises: Exercise[] })[];
+  exceptions: WorkoutDayExceptionRow[];
   mealPlan: MealPlan | null;
   meals: Meal[];
 };
@@ -23,6 +25,11 @@ export async function loadPlan(profileId: ProfileId): Promise<PlanData> {
     .eq('profile_id', profileId)
     .single();
   if (settingsError) throw settingsError;
+
+  const { data: exceptions } = await supabase
+    .from('workout_day_exceptions')
+    .select('*')
+    .eq('profile_id', profileId);
 
   const { data: program } = await supabase
     .from('programs')
@@ -81,5 +88,5 @@ export async function loadPlan(profileId: ProfileId): Promise<PlanData> {
     meals = mealsData ?? [];
   }
 
-  return { settings, program: program ?? null, workoutDays, mealPlan: mealPlan ?? null, meals };
+  return { settings, program: program ?? null, workoutDays, exceptions: exceptions ?? [], mealPlan: mealPlan ?? null, meals };
 }
