@@ -101,6 +101,10 @@ export default function HomeTab() {
                 <ThemedText type="linkPrimary">Открыть тренировку →</ThemedText>
               </ThemedView>
             </Pressable>
+          ) : program ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              Сегодня тренировки нет — день отдыха.
+            </ThemedText>
           ) : (
             <ThemedText type="small" themeColor="textSecondary">
               План ещё не построен — пройди онбординг во вкладке «Профиль», чтобы получить

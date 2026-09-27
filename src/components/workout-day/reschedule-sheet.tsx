@@ -38,7 +38,7 @@ export function RescheduleSheet({
   originDate: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
-  onDone: () => void;
+  onDone: (newDate: Date) => void;
 }) {
   const theme = useTheme();
   const [step, setStep] = useState<Step>('pick-date');
@@ -69,7 +69,7 @@ export function RescheduleSheet({
   function handleChooseScope(chosenScope: RescheduleScope) {
     if (!targetDate) return;
     setScope(chosenScope);
-    const conflict = findConflict(workoutDays, exceptions, targetDate, movingDay.id);
+    const conflict = findConflict(workoutDays, exceptions, targetDate, movingDay.id, chosenScope);
     if (conflict) {
       setConflictingDay(conflict);
       setStep('conflict');
@@ -87,15 +87,15 @@ export function RescheduleSheet({
         if (chosenScope === 'once') {
           await swapOnce(profileId, movingDay.id, originDate, targetDate, conflict.id);
         } else {
-          await swapForever(movingDay.id, originDate, targetDate, conflict.id);
+          await swapForever(profileId, movingDay.id, originDate, targetDate, conflict.id);
         }
       } else if (chosenScope === 'once') {
         await rescheduleOnce(profileId, movingDay.id, originDate, targetDate);
       } else {
-        await rescheduleForever(movingDay.id, targetDate);
+        await rescheduleForever(profileId, movingDay.id, targetDate);
       }
       reset();
-      onDone();
+      onDone(targetDate);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
     } finally {

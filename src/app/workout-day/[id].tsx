@@ -11,6 +11,7 @@ import { RescheduleSheet } from '@/components/workout-day/reschedule-sheet';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
+import { toISODate } from '@/lib/calendar-dates';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
 import { supabase } from '@/lib/supabase';
 import type { Database, ProfileId } from '@/types/database';
@@ -79,14 +80,22 @@ export default function WorkoutDayScreen() {
   );
 
   useEffect(() => {
-    getCurrentProfileId().then((current) => {
-      if (current) setProfileId(current);
-    });
+    getCurrentProfileId()
+      .then((current) => {
+        if (current) setProfileId(current);
+      })
+      .catch((err) => {
+        console.error('Failed to load current profile for reschedule feature:', err);
+      });
   }, []);
 
   useEffect(() => {
     if (!profileId) return;
-    loadPlan(profileId).then(setPlanData);
+    loadPlan(profileId)
+      .then(setPlanData)
+      .catch((err) => {
+        console.error('Failed to load plan data for reschedule feature:', err);
+      });
   }, [profileId]);
 
   function replaceExercise(exercise: Exercise) {
@@ -235,10 +244,15 @@ export default function WorkoutDayScreen() {
           originDate={originDate}
           workoutDays={planData.workoutDays}
           exceptions={planData.exceptions}
-          onDone={() => {
+          onDone={(newDate) => {
             setIsRescheduleOpen(false);
             load();
-            loadPlan(profileId).then(setPlanData);
+            loadPlan(profileId)
+              .then(setPlanData)
+              .catch((err) => {
+                console.error('Failed to reload plan data after reschedule:', err);
+              });
+            router.setParams({ date: toISODate(newDate) });
           }}
         />
       )}

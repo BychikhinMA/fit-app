@@ -7,13 +7,31 @@ type WorkoutDayEntry = PlanData['workoutDays'][number];
 
 export type RescheduleScope = 'once' | 'forever';
 
-/** Тренировочный день, который уже стоит на targetDate и это не тот же день, что переносим (иначе это не конфликт, а no-op). */
+/** Удаляет все forward-scheduled исключения дня — вызывается перед любым переносом этого дня, чтобы повторный перенос не оставлял дубликат на старой целевой дате. */
+async function clearForwardSchedule(profileId: ProfileId, workoutDayId: string): Promise<void> {
+  const { error } = await supabase
+    .from('workout_day_exceptions')
+    .delete()
+    .eq('profile_id', profileId)
+    .eq('workout_day_id', workoutDayId)
+    .eq('kind', 'scheduled');
+  if (error) throw error;
+}
+
+/** Тренировочный день, который уже стоит на targetDate и это не тот же день, что переносим (иначе это не конфликт, а no-op). Для 'forever' конфликт определяется по постоянному weekday, не по одноразовому исключению — постоянный перенос должен видеть постоянного соседа по дню недели, даже если на этой конкретной дате сейчас действует исключение. */
 export function findConflict(
   workoutDays: WorkoutDayEntry[],
   exceptions: PlanData['exceptions'],
   targetDate: Date,
-  movingDayId: string
+  movingDayId: string,
+  scope: RescheduleScope
 ): WorkoutDayEntry | null {
+  if (scope === 'forever') {
+    const weekdayOwner = workoutDays.find(
+      (d) => d.weekday === mondayIndex(targetDate) && d.id !== movingDayId
+    );
+    return weekdayOwner ?? null;
+  }
   const existing = findWorkoutForDate(workoutDays, targetDate, exceptions);
   if (existing && existing.id !== movingDayId) return existing;
   return null;
@@ -26,6 +44,7 @@ export async function rescheduleOnce(
   originDate: Date,
   targetDate: Date
 ): Promise<void> {
+  await clearForwardSchedule(profileId, movingDayId);
   const { error } = await supabase.from('workout_day_exceptions').upsert(
     [
       { profile_id: profileId, date: toISODate(originDate), kind: 'cancelled', workout_day_id: null },
@@ -37,7 +56,12 @@ export async function rescheduleOnce(
 }
 
 /** Постоянный перенос без конфликта: прямой UPDATE weekday, без записи в workout_day_exceptions. */
-export async function rescheduleForever(movingDayId: string, targetDate: Date): Promise<void> {
+export async function rescheduleForever(
+  profileId: ProfileId,
+  movingDayId: string,
+  targetDate: Date
+): Promise<void> {
+  await clearForwardSchedule(profileId, movingDayId);
   const { error } = await supabase
     .from('workout_days')
     .update({ weekday: mondayIndex(targetDate) })
@@ -53,6 +77,8 @@ export async function swapOnce(
   targetDate: Date,
   conflictingDayId: string
 ): Promise<void> {
+  await clearForwardSchedule(profileId, movingDayId);
+  await clearForwardSchedule(profileId, conflictingDayId);
   const { error } = await supabase.from('workout_day_exceptions').upsert(
     [
       { profile_id: profileId, date: toISODate(targetDate), kind: 'scheduled', workout_day_id: movingDayId },
@@ -65,11 +91,14 @@ export async function swapOnce(
 
 /** Постоянный своп: два weekday-апдейта, каждый день получает weekday другого. */
 export async function swapForever(
+  profileId: ProfileId,
   movingDayId: string,
   originDate: Date,
   targetDate: Date,
   conflictingDayId: string
 ): Promise<void> {
+  await clearForwardSchedule(profileId, movingDayId);
+  await clearForwardSchedule(profileId, conflictingDayId);
   const { error: movingError } = await supabase
     .from('workout_days')
     .update({ weekday: mondayIndex(targetDate) })
