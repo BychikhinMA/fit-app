@@ -157,6 +157,21 @@ export function findWorkoutForDate<T extends { id: string; weekday: number | nul
   return workoutDays.find((d) => d.weekday === idx);
 }
 
+/**
+ * Постоянный своп двух дней: каждый получает постоянный weekday другого —
+ * из их собственных записей в расписании, а не из даты, на которой открыт
+ * экран (та могла прийти из разового исключения и не совпадать с weekday дня).
+ */
+export function swappedWeekdays(
+  movingDay: { weekday: number | null },
+  conflictingDay: { weekday: number | null }
+): { moving: number; conflicting: number } {
+  if (movingDay.weekday === null || conflictingDay.weekday === null) {
+    throw new Error('У одного из дней нет постоянного дня недели — поменять местами навсегда нельзя');
+  }
+  return { moving: conflictingDay.weekday, conflicting: movingDay.weekday };
+}
+
 export function formatDayLabel(date: Date): string {
   return `${WEEKDAY_FULL[mondayIndex(date)]}, ${date.getDate()} ${MONTH_GENITIVE[date.getMonth()]} ${date.getFullYear()}`;
 }

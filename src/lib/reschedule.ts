@@ -1,4 +1,4 @@
-import { findWorkoutForDate, mondayIndex, toISODate } from '@/lib/calendar-dates';
+import { findWorkoutForDate, mondayIndex, swappedWeekdays, toISODate } from '@/lib/calendar-dates';
 import { supabase } from '@/lib/supabase';
 import type { PlanData } from '@/lib/load-plan';
 import type { ProfileId } from '@/types/database';
@@ -89,25 +89,24 @@ export async function swapOnce(
   if (error) throw error;
 }
 
-/** Постоянный своп: два weekday-апдейта, каждый день получает weekday другого. */
+/** Постоянный своп: два weekday-апдейта, каждый день получает постоянный weekday другого (не weekday даты, на которой открыт экран — см. `swappedWeekdays`). */
 export async function swapForever(
   profileId: ProfileId,
-  movingDayId: string,
-  originDate: Date,
-  targetDate: Date,
-  conflictingDayId: string
+  movingDay: WorkoutDayEntry,
+  conflictingDay: WorkoutDayEntry
 ): Promise<void> {
-  await clearForwardSchedule(profileId, movingDayId);
-  await clearForwardSchedule(profileId, conflictingDayId);
+  const weekdays = swappedWeekdays(movingDay, conflictingDay);
+  await clearForwardSchedule(profileId, movingDay.id);
+  await clearForwardSchedule(profileId, conflictingDay.id);
   const { error: movingError } = await supabase
     .from('workout_days')
-    .update({ weekday: mondayIndex(targetDate) })
-    .eq('id', movingDayId);
+    .update({ weekday: weekdays.moving })
+    .eq('id', movingDay.id);
   if (movingError) throw movingError;
 
   const { error: conflictingError } = await supabase
     .from('workout_days')
-    .update({ weekday: mondayIndex(originDate) })
-    .eq('id', conflictingDayId);
+    .update({ weekday: weekdays.conflicting })
+    .eq('id', conflictingDay.id);
   if (conflictingError) throw conflictingError;
 }

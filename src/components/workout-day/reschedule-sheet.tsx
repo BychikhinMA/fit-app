@@ -87,7 +87,7 @@ export function RescheduleSheet({
         if (chosenScope === 'once') {
           await swapOnce(profileId, movingDay.id, originDate, targetDate, conflict.id);
         } else {
-          await swapForever(profileId, movingDay.id, originDate, targetDate, conflict.id);
+          await swapForever(profileId, movingDay, conflict);
         }
       } else if (chosenScope === 'once') {
         await rescheduleOnce(profileId, movingDay.id, originDate, targetDate);
