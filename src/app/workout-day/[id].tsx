@@ -11,7 +11,7 @@ import { RescheduleSheet } from '@/components/workout-day/reschedule-sheet';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
-import { toISODate } from '@/lib/calendar-dates';
+import { findWorkoutForDate, toISODate } from '@/lib/calendar-dates';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
 import { supabase } from '@/lib/supabase';
 import type { Database, ProfileId } from '@/types/database';
@@ -34,6 +34,16 @@ export default function WorkoutDayScreen() {
   const [profileId, setProfileId] = useState<ProfileId | null>(null);
   const [planData, setPlanData] = useState<PlanData | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+
+  // Переносить можно, только если этот день действительно стоит на originDate.
+  // Без `?date` в ссылке originDate — сегодня, и перенос записал бы отмену
+  // чужой даты (так появились кривые исключения у профиля Максима).
+  const isScheduledOnOrigin = useMemo(
+    () =>
+      !!planData &&
+      findWorkoutForDate(planData.workoutDays, originDate, planData.exceptions)?.id === id,
+    [planData, originDate, id]
+  );
 
   // Все контексты, реально встречающиеся у упражнений этого дня, плюс дефолтный день.
   const contexts = useMemo(() => {
@@ -155,7 +165,7 @@ export default function WorkoutDayScreen() {
             </View>
           )}
 
-          {day && profileId && planData && (
+          {day && profileId && planData && isScheduledOnOrigin && (
             <Pressable
               onPress={() => setIsRescheduleOpen(true)}
               accessibilityRole="button"

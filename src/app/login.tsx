@@ -17,6 +17,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ensureOwnProfile, signInWithPassword } from '@/lib/auth';
+import { errorMessage } from '@/lib/error-message';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginScreen() {
@@ -35,11 +36,14 @@ export default function LoginScreen() {
       await signInWithPassword(email.trim(), password);
       const profile = await ensureOwnProfile();
 
-      const { data: settings } = await supabase
+      // Ошибку проверяем явно: иначе при сбое сети settings = null и уже
+      // настроенный пользователь уехал бы в онбординг, который пересобирает план.
+      const { data: settings, error: settingsError } = await supabase
         .from('profile_settings')
         .select('profile_id')
         .eq('profile_id', profile.id)
         .maybeSingle();
+      if (settingsError) throw settingsError;
 
       if (settings) {
         router.replace('/home');
@@ -47,7 +51,7 @@ export default function LoginScreen() {
         router.replace({ pathname: '/onboarding', params: { profile: profile.id } });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не получилось войти, попробуй ещё раз.');
+      setError(`Не получилось войти: ${errorMessage(err, 'неизвестная ошибка')}`);
       setSubmitting(false);
     }
   }

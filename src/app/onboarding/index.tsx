@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
+import { errorMessage } from '@/lib/error-message';
 import { ONBOARDING_STEPS, type FieldConfig } from '@/lib/onboarding-steps';
 import { EMPTY_ANSWERS, type OnboardingAnswers } from '@/lib/onboarding-types';
 import { generateStubPlan } from '@/lib/plan-stub';
@@ -65,7 +66,7 @@ export default function OnboardingScreen() {
       await generateStubPlan(profileId, answers);
       router.replace('/home');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не получилось построить план, попробуй ещё раз.');
+      setError(`Не получилось построить план: ${errorMessage(err, 'неизвестная ошибка')}`);
       setSubmitting(false);
     }
   }
