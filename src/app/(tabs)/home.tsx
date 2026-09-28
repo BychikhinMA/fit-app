@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
 import { findWorkoutForDate, toISODate } from '@/lib/calendar-dates';
 import { BMI_DISCLAIMER } from '@/lib/health-calc';
+import { errorMessage } from '@/lib/error-message';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
 import type { ProfileId } from '@/types/database';
 
@@ -30,7 +31,7 @@ export default function HomeTab() {
     if (!profileId) return;
     loadPlan(profileId)
       .then(setData)
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(`Не получилось загрузить план: ${errorMessage(err, 'неизвестная ошибка')}`));
   }, [profileId]);
 
   if (error) {

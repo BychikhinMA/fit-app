@@ -250,10 +250,14 @@ task-observer перед началом работы.
     `maxWidth: 480` по центру, `ScrollView` с `maxHeight: '90%'`, подложка
     на весь экран. (Ошибки, `95da97a`) ошибки Supabase — обычные объекты,
     `String(err)` давал «[object Object]» — новый хелпер
-    `src/lib/error-message.ts` (`errorMessage(err, fallback)`); применён
-    только в шторке переноса, а `(tabs)/home.tsx`/`nutrition.tsx`/
-    `workouts.tsx` всё ещё используют старый паттерн `instanceof Error ?
-    … : String(err)` — кандидат на отдельную замену.
+    `src/lib/error-message.ts` (`errorMessage(err, fallback)`); применён в
+    шторке переноса и (отдельным коммитом после мёржа) в `.catch` у
+    `loadPlan` на `(tabs)/home.tsx`/`nutrition.tsx`/`workouts.tsx` —
+    «Не получилось загрузить план: …». Старого паттерна
+    `instanceof Error ? … : String(err)` в коде больше нет. Заметка:
+    supabase-js сам повторяет упавший сетевой GET несколько раз с паузой,
+    поэтому при обрыве сети ошибка на экране появляется не сразу, а
+    через ~10 с (до этого — спиннер).
   - **Тесты:** в проекте появился `npm test` — встроенный `node:test` без
     новых зависимостей (Node 24 сам снимает TS-типы; тест-файлы — `.mjs`
     рядом с кодом, импортируют `./x.ts`, поэтому тестируемая логика должна

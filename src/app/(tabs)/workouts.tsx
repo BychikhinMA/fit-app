@@ -15,6 +15,7 @@ import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { type CalendarScale, shiftAnchor } from '@/lib/calendar-dates';
 import { getCurrentProfileId } from '@/lib/auth';
+import { errorMessage } from '@/lib/error-message';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
 import type { ProfileId } from '@/types/database';
 
@@ -37,7 +38,7 @@ export default function WorkoutsTab() {
     if (!profileId) return;
     loadPlan(profileId)
       .then(setData)
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err) => setError(`Не получилось загрузить план: ${errorMessage(err, 'неизвестная ошибка')}`));
   }, [profileId]);
 
   function handleNavigate(direction: 1 | -1) {
