@@ -50,6 +50,7 @@ example
 
 # Claude Code - personal, machine-specific
 .claude/settings.local.json
+.claude/worktrees/
 
 # task-observer skill log
 skill-observations/
