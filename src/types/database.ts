@@ -134,6 +134,25 @@ export interface Database {
           typical_frequency?: string | null;
         }
       >;
+      workout_day_exceptions: Table<
+        {
+          id: string;
+          profile_id: ProfileId;
+          /** YYYY-MM-DD, дата в локальном календаре (не UTC) — см. calendar-dates.ts toISODate. */
+          date: string;
+          kind: 'scheduled' | 'cancelled';
+          /** null при kind = 'cancelled', обязателен при kind = 'scheduled'. */
+          workout_day_id: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          profile_id: ProfileId;
+          date: string;
+          kind: 'scheduled' | 'cancelled';
+          workout_day_id?: string | null;
+        }
+      >;
       programs: Table<
         {
           id: string;

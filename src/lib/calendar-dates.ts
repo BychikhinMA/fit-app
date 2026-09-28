@@ -50,6 +50,14 @@ export function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+/** `YYYY-MM-DD` в локальном календаре виджета — не `date.toISOString()`, который сдвигает дату на границе часовых поясов (UTC). Формат совпадает с тем, как Postgres `date` возвращается через supabase-js. */
+export function toISODate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function startOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -123,13 +131,45 @@ export function shiftAnchor(date: Date, scale: CalendarScale, direction: 1 | -1)
   }
 }
 
-/** Тренировочный день, чей `weekday` совпадает с днём недели `date` (программа повторяется бессрочно). */
-export function findWorkoutForDate<T extends { weekday: number | null }>(
+export type WorkoutDayException = {
+  date: string;
+  kind: 'scheduled' | 'cancelled';
+  workout_day_id: string | null;
+};
+
+/**
+ * Тренировочный день на конкретную дату. Сначала смотрит, есть ли исключение
+ * на точную дату (перенос/отмена) — если есть, оно побеждает; если нет,
+ * откатывается на еженедельный weekday-матч (программа считается бессрочной).
+ */
+export function findWorkoutForDate<T extends { id: string; weekday: number | null }>(
   workoutDays: T[],
-  date: Date
+  date: Date,
+  exceptions: WorkoutDayException[] = []
 ): T | undefined {
+  const iso = toISODate(date);
+  const exception = exceptions.find((e) => e.date === iso);
+  if (exception) {
+    if (exception.kind === 'cancelled') return undefined;
+    return workoutDays.find((d) => d.id === exception.workout_day_id);
+  }
   const idx = mondayIndex(date);
   return workoutDays.find((d) => d.weekday === idx);
+}
+
+/**
+ * Постоянный своп двух дней: каждый получает постоянный weekday другого —
+ * из их собственных записей в расписании, а не из даты, на которой открыт
+ * экран (та могла прийти из разового исключения и не совпадать с weekday дня).
+ */
+export function swappedWeekdays(
+  movingDay: { weekday: number | null },
+  conflictingDay: { weekday: number | null }
+): { moving: number; conflicting: number } {
+  if (movingDay.weekday === null || conflictingDay.weekday === null) {
+    throw new Error('У одного из дней нет постоянного дня недели — поменять местами навсегда нельзя');
+  }
+  return { moving: conflictingDay.weekday, conflicting: movingDay.weekday };
 }
 
 export function formatDayLabel(date: Date): string {

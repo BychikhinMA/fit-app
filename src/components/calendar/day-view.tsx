@@ -4,14 +4,22 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { findWorkoutForDate, formatDayLabel } from '@/lib/calendar-dates';
+import { findWorkoutForDate, formatDayLabel, toISODate } from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
-export function DayView({ anchor, workoutDays }: { anchor: Date; workoutDays: WorkoutDayEntry[] }) {
+export function DayView({
+  anchor,
+  workoutDays,
+  exceptions,
+}: {
+  anchor: Date;
+  workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
+}) {
   const theme = useTheme();
-  const day = findWorkoutForDate(workoutDays, anchor);
+  const day = findWorkoutForDate(workoutDays, anchor, exceptions);
 
   return (
     <View style={styles.container}>
@@ -21,7 +29,9 @@ export function DayView({ anchor, workoutDays }: { anchor: Date; workoutDays: Wo
 
       {day ? (
         <Pressable
-          onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
+          onPress={() =>
+            router.push({ pathname: '/workout-day/[id]', params: { id: day.id, date: toISODate(anchor) } })
+          }
           accessibilityRole="button"
           accessibilityLabel={`Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
           style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
