@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { errorMessage } from '@/lib/error-message';
 import { setStoredProfileId } from '@/lib/profile-storage';
 import { supabase } from '@/lib/supabase';
 import type { ProfileId } from '@/types/database';
@@ -19,9 +20,11 @@ const PROFILES: { id: ProfileId; displayName: string }[] = [
 export default function ProfilePickerScreen() {
   const theme = useTheme();
   const [loadingProfile, setLoadingProfile] = useState<ProfileId | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function selectProfile(id: ProfileId) {
     setLoadingProfile(id);
+    setError(null);
     try {
       await setStoredProfileId(id);
 
@@ -39,7 +42,7 @@ export default function ProfilePickerScreen() {
       }
     } catch (err) {
       setLoadingProfile(null);
-      console.error(err);
+      setError(`Не получилось открыть профиль: ${errorMessage(err, 'неизвестная ошибка')}`);
     }
   }
 
@@ -68,6 +71,12 @@ export default function ProfilePickerScreen() {
             </Pressable>
           ))}
         </ThemedView>
+
+        {error && (
+          <ThemedText type="small" themeColor="error" style={styles.error} accessibilityRole="alert">
+            {error}
+          </ThemedText>
+        )}
 
         <Pressable onPress={() => router.push('/login')} style={styles.loginLink}>
           <ThemedText type="linkPrimary">Войти в свой аккаунт</ThemedText>
@@ -112,5 +121,8 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     alignItems: 'center',
+  },
+  error: {
+    textAlign: 'center',
   },
 });
