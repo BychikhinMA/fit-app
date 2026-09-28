@@ -11,10 +11,12 @@ type WorkoutDayEntry = PlanData['workoutDays'][number];
 export function QuarterView({
   anchor,
   workoutDays,
+  exceptions,
   onSelectMonth,
 }: {
   anchor: Date;
   workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
   onSelectMonth: (monthStart: Date) => void;
 }) {
   const months = getQuarterMonths(anchor);
@@ -26,6 +28,7 @@ export function QuarterView({
           key={monthStart.toISOString()}
           monthStart={monthStart}
           workoutDays={workoutDays}
+          exceptions={exceptions}
           onSelect={onSelectMonth}
         />
       ))}

@@ -4,12 +4,27 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { WEEKDAY_FULL, WEEKDAY_SHORT, findWorkoutForDate, getWeekDates, isSameDay } from '@/lib/calendar-dates';
+import {
+  WEEKDAY_FULL,
+  WEEKDAY_SHORT,
+  findWorkoutForDate,
+  getWeekDates,
+  isSameDay,
+  toISODate,
+} from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
-export function WeekView({ anchor, workoutDays }: { anchor: Date; workoutDays: WorkoutDayEntry[] }) {
+export function WeekView({
+  anchor,
+  workoutDays,
+  exceptions,
+}: {
+  anchor: Date;
+  workoutDays: WorkoutDayEntry[];
+  exceptions: PlanData['exceptions'];
+}) {
   const theme = useTheme();
   const today = new Date();
   const weekDates = getWeekDates(anchor);
@@ -17,7 +32,7 @@ export function WeekView({ anchor, workoutDays }: { anchor: Date; workoutDays: W
   return (
     <View style={styles.row}>
       {weekDates.map((date, i) => {
-        const day = findWorkoutForDate(workoutDays, date);
+        const day = findWorkoutForDate(workoutDays, date, exceptions);
         const dateLabel = date.getDate();
         const today_ = isSameDay(date, today);
 
@@ -40,7 +55,9 @@ export function WeekView({ anchor, workoutDays }: { anchor: Date; workoutDays: W
         return (
           <Pressable
             key={i}
-            onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: day.id } })}
+            onPress={() =>
+              router.push({ pathname: '/workout-day/[id]', params: { id: day.id, date: toISODate(date) } })
+            }
             accessibilityRole="button"
             accessibilityLabel={`${WEEKDAY_FULL[i]}, ${dateLabel} — Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
             style={[

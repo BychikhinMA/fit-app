@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,21 +7,33 @@ import { BackButton } from '@/components/back-button';
 import { Chip } from '@/components/onboarding/chip';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { RescheduleSheet } from '@/components/workout-day/reschedule-sheet';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { getCurrentProfileId } from '@/lib/auth';
+import { toISODate } from '@/lib/calendar-dates';
+import { loadPlan, type PlanData } from '@/lib/load-plan';
 import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/database';
+import type { Database, ProfileId } from '@/types/database';
 
 type WorkoutDay = Database['public']['Tables']['workout_days']['Row'];
 type Exercise = Database['public']['Tables']['exercises']['Row'];
 
 export default function WorkoutDayScreen() {
   const theme = useTheme();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, date: dateParam } = useLocalSearchParams<{ id: string; date?: string }>();
+  const originDate = useMemo(() => {
+    if (!dateParam) return new Date();
+    const [y, m, d] = dateParam.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }, [dateParam]);
   const [day, setDay] = useState<WorkoutDay | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedContext, setSelectedContext] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<ProfileId | null>(null);
+  const [planData, setPlanData] = useState<PlanData | null>(null);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
 
   // Все контексты, реально встречающиеся у упражнений этого дня, плюс дефолтный день.
   const contexts = useMemo(() => {
@@ -66,6 +78,25 @@ export default function WorkoutDayScreen() {
       load();
     }, [load])
   );
+
+  useEffect(() => {
+    getCurrentProfileId()
+      .then((current) => {
+        if (current) setProfileId(current);
+      })
+      .catch((err) => {
+        console.error('Failed to load current profile for reschedule feature:', err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!profileId) return;
+    loadPlan(profileId)
+      .then(setPlanData)
+      .catch((err) => {
+        console.error('Failed to load plan data for reschedule feature:', err);
+      });
+  }, [profileId]);
 
   function replaceExercise(exercise: Exercise) {
     router.push({
@@ -122,6 +153,16 @@ export default function WorkoutDayScreen() {
                 />
               ))}
             </View>
+          )}
+
+          {day && profileId && planData && (
+            <Pressable
+              onPress={() => setIsRescheduleOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Перенести тренировку на другую дату"
+              style={styles.rescheduleButton}>
+              <ThemedText type="linkPrimary">Перенести</ThemedText>
+            </Pressable>
           )}
 
           {day.warmup.length > 0 && (
@@ -193,6 +234,28 @@ export default function WorkoutDayScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
+
+      {day && profileId && planData && (
+        <RescheduleSheet
+          visible={isRescheduleOpen}
+          onClose={() => setIsRescheduleOpen(false)}
+          profileId={profileId}
+          movingDay={{ ...day, exercises }}
+          originDate={originDate}
+          workoutDays={planData.workoutDays}
+          exceptions={planData.exceptions}
+          onDone={(newDate) => {
+            setIsRescheduleOpen(false);
+            load();
+            loadPlan(profileId)
+              .then(setPlanData)
+              .catch((err) => {
+                console.error('Failed to reload plan data after reschedule:', err);
+              });
+            router.setParams({ date: toISODate(newDate) });
+          }}
+        />
+      )}
     </ThemedView>
   );
 }
@@ -255,4 +318,5 @@ const styles = StyleSheet.create({
   },
   exerciseCaption: { flex: 1 },
   replaceButton: { minHeight: 44, justifyContent: 'center' },
+  rescheduleButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
 });

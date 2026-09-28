@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
+import { findWorkoutForDate, toISODate } from '@/lib/calendar-dates';
 import { BMI_DISCLAIMER } from '@/lib/health-calc';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
 import type { ProfileId } from '@/types/database';
@@ -52,9 +53,10 @@ export default function HomeTab() {
     );
   }
 
-  const { settings, program, workoutDays } = data;
+  const { settings, program, workoutDays, exceptions } = data;
   const isStub = program?.generation_source === 'stub';
-  const today = workoutDays[0];
+  const todayDate = new Date();
+  const today = findWorkoutForDate(workoutDays, todayDate, exceptions);
   const hasBmi = settings.bmi_value != null;
   const hasCalories = settings.recommended_calories != null;
 
@@ -80,7 +82,12 @@ export default function HomeTab() {
 
           {today ? (
             <Pressable
-              onPress={() => router.push({ pathname: '/workout-day/[id]', params: { id: today.id } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/workout-day/[id]',
+                  params: { id: today.id, date: toISODate(todayDate) },
+                })
+              }
               accessibilityRole="button"
               accessibilityLabel={`Открыть тренировку: ${today.day_label}`}>
               <ThemedView type="backgroundElement" style={styles.heroCard}>
@@ -94,6 +101,10 @@ export default function HomeTab() {
                 <ThemedText type="linkPrimary">Открыть тренировку →</ThemedText>
               </ThemedView>
             </Pressable>
+          ) : program ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              Сегодня тренировки нет — день отдыха.
+            </ThemedText>
           ) : (
             <ThemedText type="small" themeColor="textSecondary">
               План ещё не построен — пройди онбординг во вкладке «Профиль», чтобы получить
