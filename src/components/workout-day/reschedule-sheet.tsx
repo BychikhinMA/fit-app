@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip } from '@/components/onboarding/chip';
 import { ThemedText } from '@/components/themed-text';
@@ -7,6 +7,7 @@ import { RescheduleDatePicker } from '@/components/workout-day/reschedule-date-p
 import { Elevation, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayLabel } from '@/lib/calendar-dates';
+import { errorMessage } from '@/lib/error-message';
 import type { PlanData } from '@/lib/load-plan';
 import {
   findConflict,
@@ -97,7 +98,7 @@ export function RescheduleSheet({
       reset();
       onDone(targetDate);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : String(err));
+      setSaveError(`Не получилось сохранить перенос: ${errorMessage(err, 'неизвестная ошибка')}`);
     } finally {
       setIsSaving(false);
     }
@@ -114,71 +115,89 @@ export function RescheduleSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Закрыть" />
-      <View style={[styles.sheet, { backgroundColor: theme.background }, Elevation.card]}>
-        {step === 'pick-date' && (
-          <>
-            <ThemedText type="smallBold">Выбери новую дату</ThemedText>
-            <RescheduleDatePicker
-              workoutDays={workoutDays}
-              exceptions={exceptions}
-              originDate={originDate}
-              onSelectDate={handleSelectDate}
-            />
-          </>
-        )}
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Закрыть" />
+        <ScrollView
+          style={[styles.sheet, { backgroundColor: theme.background }, Elevation.card]}
+          contentContainerStyle={styles.sheetContent}>
+          {step === 'pick-date' && (
+            <>
+              <ThemedText type="smallBold">Выбери новую дату</ThemedText>
+              <RescheduleDatePicker
+                workoutDays={workoutDays}
+                exceptions={exceptions}
+                originDate={originDate}
+                onSelectDate={handleSelectDate}
+              />
+            </>
+          )}
 
-        {step === 'choose-scope' && targetDate && (
-          <>
-            <ThemedText type="smallBold">Перенести на {formatDayLabel(targetDate)}</ThemedText>
-            <View style={styles.chipRow}>
-              <Chip label="Только в этот раз" selected={false} onPress={() => handleChooseScope('once')} />
-              <Chip label="Теперь всегда" selected={false} onPress={() => handleChooseScope('forever')} />
-            </View>
-          </>
-        )}
+          {step === 'choose-scope' && targetDate && (
+            <>
+              <ThemedText type="smallBold">Перенести на {formatDayLabel(targetDate)}</ThemedText>
+              <View style={styles.chipRow}>
+                <Chip label="Только в этот раз" selected={false} onPress={() => handleChooseScope('once')} />
+                <Chip label="Теперь всегда" selected={false} onPress={() => handleChooseScope('forever')} />
+              </View>
+            </>
+          )}
 
-        {step === 'conflict' && targetDate && conflictingDay && (
-          <>
-            <ThemedText type="smallBold">
-              На {formatDayLabel(targetDate)} уже стоит {conflictingDay.day_label}. Поменять местами?
+          {step === 'conflict' && targetDate && conflictingDay && (
+            <>
+              <ThemedText type="smallBold">
+                На {formatDayLabel(targetDate)} уже стоит {conflictingDay.day_label}. Поменять местами?
+              </ThemedText>
+              <View style={styles.chipRow}>
+                <Pressable onPress={handleConfirmSwap} style={styles.actionButton} accessibilityRole="button">
+                  <ThemedText type="linkPrimary">Поменять местами</ThemedText>
+                </Pressable>
+                <Pressable onPress={handleCancelConflict} style={styles.actionButton} accessibilityRole="button">
+                  <ThemedText type="default">Отменить перенос</ThemedText>
+                </Pressable>
+              </View>
+            </>
+          )}
+
+          {isSaving && <ThemedText type="small" themeColor="textSecondary">Сохраняю…</ThemedText>}
+          {saveError && (
+            <ThemedText type="small" themeColor="error">
+              {saveError}
             </ThemedText>
-            <View style={styles.chipRow}>
-              <Pressable onPress={handleConfirmSwap} style={styles.actionButton} accessibilityRole="button">
-                <ThemedText type="linkPrimary">Поменять местами</ThemedText>
-              </Pressable>
-              <Pressable onPress={handleCancelConflict} style={styles.actionButton} accessibilityRole="button">
-                <ThemedText type="default">Отменить перенос</ThemedText>
-              </Pressable>
-            </View>
-          </>
-        )}
+          )}
 
-        {isSaving && <ThemedText type="small" themeColor="textSecondary">Сохраняю…</ThemedText>}
-        {saveError && (
-          <ThemedText type="small" themeColor="error">
-            {saveError}
-          </ThemedText>
-        )}
-
-        <Pressable onPress={handleClose} style={styles.actionButton} accessibilityRole="button">
-          <ThemedText type="small" themeColor="textSecondary">
-            Закрыть
-          </ThemedText>
-        </Pressable>
+          <Pressable onPress={handleClose} style={styles.actionButton} accessibilityRole="button">
+            <ThemedText type="small" themeColor="textSecondary">
+              Закрыть
+            </ThemedText>
+          </Pressable>
+        </ScrollView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  overlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  // На всю площадь, а не только над шторкой — иначе по бокам узкой шторки на широком экране фон не затемнялся.
+  backdrop: {
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
+  // На широком экране ячейки дат (`aspectRatio: 1`) растягивались на всю ширину
+  // и месяц не влезал по высоте — шторка ограничена по ширине и прокручивается.
   sheet: {
+    flexGrow: 0,
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '90%',
+    alignSelf: 'center',
     borderTopLeftRadius: Radius.card,
     borderTopRightRadius: Radius.card,
+  },
+  sheetContent: {
     padding: Spacing.four,
     gap: Spacing.three,
   },
