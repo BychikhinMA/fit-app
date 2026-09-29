@@ -70,7 +70,7 @@ export default function WorkoutsTab() {
     );
   }
 
-  const { program, workoutDays, exceptions } = data;
+  const { program, workoutDays, exceptions, periods, workoutLogs } = data;
 
   return (
     <ThemedView style={styles.container}>
@@ -92,14 +92,39 @@ export default function WorkoutsTab() {
                 onToday={() => setAnchor(new Date())}
               />
 
-              {scale === 'day' && <DayView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
-              {scale === 'week' && <WeekView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
-              {scale === 'month' && <MonthView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
+              {scale === 'day' && (
+                <DayView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  periods={periods}
+                  workoutLogs={workoutLogs}
+                />
+              )}
+              {scale === 'week' && (
+                <WeekView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  periods={periods}
+                  workoutLogs={workoutLogs}
+                />
+              )}
+              {scale === 'month' && (
+                <MonthView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  periods={periods}
+                  workoutLogs={workoutLogs}
+                />
+              )}
               {scale === 'quarter' && (
                 <QuarterView
                   anchor={anchor}
                   workoutDays={workoutDays}
                   exceptions={exceptions}
+                  periods={periods}
                   onSelectMonth={handleSelectMonth}
                 />
               )}
@@ -108,6 +133,7 @@ export default function WorkoutsTab() {
                   anchor={anchor}
                   workoutDays={workoutDays}
                   exceptions={exceptions}
+                  periods={periods}
                   onSelectMonth={handleSelectMonth}
                 />
               )}

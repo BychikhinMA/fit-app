@@ -4,8 +4,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { findWorkoutForDate, formatDayLabel, toISODate } from '@/lib/calendar-dates';
+import { formatDayLabel, toISODate } from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
+import { workoutForDate, workoutStatus } from '@/lib/program-schedule';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
@@ -13,13 +14,18 @@ export function DayView({
   anchor,
   workoutDays,
   exceptions,
+  periods,
+  workoutLogs,
 }: {
   anchor: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
+  workoutLogs: PlanData['workoutLogs'];
 }) {
   const theme = useTheme();
-  const day = findWorkoutForDate(workoutDays, anchor, exceptions);
+  const day = workoutForDate(workoutDays, anchor, exceptions, periods);
+  const status = day ? workoutStatus(anchor, workoutLogs, new Date()) : null;
 
   return (
     <View style={styles.container}>
@@ -38,6 +44,9 @@ export function DayView({
           <ThemedText type="default">{day.day_label}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {day.target_muscle_groups.join(', ')} · {day.exercises.length} упражнений
+          </ThemedText>
+          <ThemedText type="small" themeColor={status === 'done' ? 'accentText' : 'textSecondary'}>
+            {status === 'done' ? 'Выполнено ✓' : status === 'missed' ? 'Пропущено' : 'Впереди'}
           </ThemedText>
         </Pressable>
       ) : (

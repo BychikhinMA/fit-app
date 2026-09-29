@@ -30,6 +30,7 @@ export function RescheduleSheet({
   originDate,
   workoutDays,
   exceptions,
+  periods,
   onDone,
 }: {
   visible: boolean;
@@ -39,6 +40,7 @@ export function RescheduleSheet({
   originDate: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
   onDone: (newDate: Date) => void;
 }) {
   const theme = useTheme();
@@ -126,6 +128,7 @@ export function RescheduleSheet({
               <RescheduleDatePicker
                 workoutDays={workoutDays}
                 exceptions={exceptions}
+                periods={periods}
                 originDate={originDate}
                 onSelectDate={handleSelectDate}
               />
