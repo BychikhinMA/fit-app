@@ -12,8 +12,10 @@ import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
 import { toISODate } from '@/lib/calendar-dates';
+import { errorMessage } from '@/lib/error-message';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
-import { workoutForDate } from '@/lib/program-schedule';
+import { markWorkoutDone, unmarkWorkoutDone } from '@/lib/program-lifecycle';
+import { workoutForDate, workoutStatus } from '@/lib/program-schedule';
 import { supabase } from '@/lib/supabase';
 import type { Database, ProfileId } from '@/types/database';
 
@@ -35,6 +37,8 @@ export default function WorkoutDayScreen() {
   const [profileId, setProfileId] = useState<ProfileId | null>(null);
   const [planData, setPlanData] = useState<PlanData | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [isMarking, setIsMarking] = useState(false);
+  const [markError, setMarkError] = useState<string | null>(null);
 
   // Переносить можно, только если этот день действительно стоит на originDate
   // и только в активном периоде программы — на паузе переносить нечего. Без
@@ -46,6 +50,41 @@ export default function WorkoutDayScreen() {
       workoutForDate(planData.workoutDays, originDate, planData.exceptions, planData.periods)?.id === id,
     [planData, originDate, id]
   );
+
+  const today = new Date();
+  const canMark = isScheduledOnOrigin && toISODate(originDate) <= toISODate(today);
+  const status = planData && canMark ? workoutStatus(originDate, planData.workoutLogs, today) : null;
+
+  const reloadPlan = useCallback(() => {
+    if (!profileId) return;
+    loadPlan(profileId)
+      .then(setPlanData)
+      .catch((err) => console.error('Failed to reload plan data:', err));
+  }, [profileId]);
+
+  async function toggleDone() {
+    if (!profileId || !day) return;
+    setIsMarking(true);
+    setMarkError(null);
+    try {
+      if (status === 'done') {
+        await unmarkWorkoutDone(profileId, day.id, originDate);
+      } else {
+        await markWorkoutDone({
+          profileId,
+          workoutDayId: day.id,
+          date: originDate,
+          dayLabel: day.day_label,
+          contextUsed: activeContext,
+        });
+      }
+      reloadPlan();
+    } catch (err) {
+      setMarkError(`Не получилось сохранить отметку: ${errorMessage(err, 'неизвестная ошибка')}`);
+    } finally {
+      setIsMarking(false);
+    }
+  }
 
   // Все контексты, реально встречающиеся у упражнений этого дня, плюс дефолтный день.
   const contexts = useMemo(() => {
@@ -102,13 +141,8 @@ export default function WorkoutDayScreen() {
   }, []);
 
   useEffect(() => {
-    if (!profileId) return;
-    loadPlan(profileId)
-      .then(setPlanData)
-      .catch((err) => {
-        console.error('Failed to load plan data for reschedule feature:', err);
-      });
-  }, [profileId]);
+    reloadPlan();
+  }, [reloadPlan]);
 
   function replaceExercise(exercise: Exercise) {
     router.push({
@@ -175,6 +209,31 @@ export default function WorkoutDayScreen() {
               style={styles.rescheduleButton}>
               <ThemedText type="linkPrimary">Перенести</ThemedText>
             </Pressable>
+          )}
+
+          {canMark && status && (
+            <View style={styles.markRow}>
+              {status === 'done' && (
+                <ThemedText type="smallBold" themeColor="accentText">
+                  Выполнено ✓
+                </ThemedText>
+              )}
+              <Pressable
+                onPress={toggleDone}
+                disabled={isMarking}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: isMarking }}
+                style={styles.rescheduleButton}>
+                <ThemedText type={status === 'done' ? 'default' : 'linkPrimary'}>
+                  {isMarking ? 'Сохраняю…' : status === 'done' ? 'Снять отметку' : 'Отметить выполненной'}
+                </ThemedText>
+              </Pressable>
+            </View>
+          )}
+          {markError && (
+            <ThemedText type="small" themeColor="error" accessibilityRole="alert">
+              {markError}
+            </ThemedText>
           )}
 
           {day.warmup.length > 0 && (
@@ -260,11 +319,7 @@ export default function WorkoutDayScreen() {
           onDone={(newDate) => {
             setIsRescheduleOpen(false);
             load();
-            loadPlan(profileId)
-              .then(setPlanData)
-              .catch((err) => {
-                console.error('Failed to reload plan data after reschedule:', err);
-              });
+            reloadPlan();
             router.setParams({ date: toISODate(newDate) });
           }}
         />
@@ -332,4 +387,5 @@ const styles = StyleSheet.create({
   exerciseCaption: { flex: 1 },
   replaceButton: { minHeight: 44, justifyContent: 'center' },
   rescheduleButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  markRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, flexWrap: 'wrap' },
 });
