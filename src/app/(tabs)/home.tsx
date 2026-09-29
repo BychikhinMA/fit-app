@@ -1,17 +1,21 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { describeState } from '@/components/program/program-controls';
+import { StartProgramSheet } from '@/components/program/start-program-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getCurrentProfileId } from '@/lib/auth';
-import { findWorkoutForDate, toISODate } from '@/lib/calendar-dates';
+import { toISODate } from '@/lib/calendar-dates';
 import { BMI_DISCLAIMER } from '@/lib/health-calc';
 import { errorMessage } from '@/lib/error-message';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
+import { resumeProgram } from '@/lib/program-lifecycle';
+import { programState, workoutForDate, workoutStatus } from '@/lib/program-schedule';
 import type { ProfileId } from '@/types/database';
 
 export default function HomeTab() {
@@ -19,6 +23,8 @@ export default function HomeTab() {
   const [profileId, setProfileId] = useState<ProfileId | null>(null);
   const [data, setData] = useState<PlanData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isStartOpen, setIsStartOpen] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   useEffect(() => {
     getCurrentProfileId().then((current) => {
@@ -27,12 +33,14 @@ export default function HomeTab() {
     });
   }, []);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!profileId) return;
     loadPlan(profileId)
       .then(setData)
       .catch((err) => setError(`Не получилось загрузить план: ${errorMessage(err, 'неизвестная ошибка')}`));
   }, [profileId]);
+
+  useFocusEffect(reload);
 
   if (error) {
     return (
@@ -54,10 +62,12 @@ export default function HomeTab() {
     );
   }
 
-  const { settings, program, workoutDays, exceptions } = data;
+  const { settings, program, workoutDays, exceptions, periods, workoutLogs } = data;
   const isStub = program?.generation_source === 'stub';
   const todayDate = new Date();
-  const today = findWorkoutForDate(workoutDays, todayDate, exceptions);
+  const state = programState(periods, todayDate);
+  const today = workoutForDate(workoutDays, todayDate, exceptions, periods);
+  const todayStatus = today ? workoutStatus(todayDate, workoutLogs, todayDate) : null;
   const hasBmi = settings.bmi_value != null;
   const hasCalories = settings.recommended_calories != null;
 
@@ -81,7 +91,54 @@ export default function HomeTab() {
             </ThemedView>
           )}
 
-          {today ? (
+          {!program ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              План ещё не построен — пройди онбординг во вкладке «Профиль», чтобы получить
+              программу.
+            </ThemedText>
+          ) : state.kind === 'not_started' || state.kind === 'stopped' ? (
+            <ThemedView type="backgroundElement" style={styles.heroCard}>
+              <ThemedText type="smallBold" themeColor="accentText">
+                {state.kind === 'stopped' ? 'ПРОГРАММА ЗАВЕРШЕНА' : 'ПРОГРАММА ГОТОВА'}
+              </ThemedText>
+              <ThemedText type="default" themeColor="textSecondary">
+                {workoutDays.length} тренировки в неделю. Выбери дату старта и дни.
+              </ThemedText>
+              <Pressable onPress={() => setIsStartOpen(true)} accessibilityRole="button" style={styles.heroAction}>
+                <ThemedText type="linkPrimary">{state.kind === 'stopped' ? 'Начать заново →' : 'Начать →'}</ThemedText>
+              </Pressable>
+            </ThemedView>
+          ) : state.kind === 'paused' ? (
+            <ThemedView type="backgroundElement" style={styles.heroCard}>
+              <ThemedText type="smallBold" themeColor="accentText">
+                НА ПАУЗЕ
+              </ThemedText>
+              <ThemedText type="default" themeColor="textSecondary">
+                {describeState(state)}
+              </ThemedText>
+              <Pressable
+                onPress={() =>
+                  resumeProgram(profileId as ProfileId, program.id, new Date())
+                    .then(reload)
+                    .catch((err) =>
+                      setResumeError(`Не получилось продолжить программу: ${errorMessage(err, 'неизвестная ошибка')}`)
+                    )
+                }
+                accessibilityRole="button"
+                style={styles.heroAction}>
+                <ThemedText type="linkPrimary">Продолжить →</ThemedText>
+              </Pressable>
+              {resumeError && (
+                <ThemedText type="small" themeColor="error" accessibilityRole="alert">
+                  {resumeError}
+                </ThemedText>
+              )}
+            </ThemedView>
+          ) : state.kind === 'scheduled' ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              {describeState(state)}. До старта тренировок нет.
+            </ThemedText>
+          ) : today ? (
             <Pressable
               onPress={() =>
                 router.push({
@@ -90,7 +147,7 @@ export default function HomeTab() {
                 })
               }
               accessibilityRole="button"
-              accessibilityLabel={`Открыть тренировку: ${today.day_label}`}>
+              accessibilityLabel={`Открыть тренировку: ${today.day_label}${todayStatus === 'done' ? ', выполнено' : ''}`}>
               <ThemedView type="backgroundElement" style={styles.heroCard}>
                 <ThemedText type="smallBold" themeColor="accentText">
                   СЕГОДНЯ
@@ -99,17 +156,17 @@ export default function HomeTab() {
                 <ThemedText type="default" themeColor="textSecondary">
                   {today.target_muscle_groups.join(', ')} · {today.exercises.length} упражнений
                 </ThemedText>
+                {todayStatus === 'done' && (
+                  <ThemedText type="smallBold" themeColor="accentText">
+                    Выполнено ✓
+                  </ThemedText>
+                )}
                 <ThemedText type="linkPrimary">Открыть тренировку →</ThemedText>
               </ThemedView>
             </Pressable>
-          ) : program ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              Сегодня тренировки нет — день отдыха.
-            </ThemedText>
           ) : (
             <ThemedText type="small" themeColor="textSecondary">
-              План ещё не построен — пройди онбординг во вкладке «Профиль», чтобы получить
-              программу.
+              Сегодня тренировки нет — день отдыха.
             </ThemedText>
           )}
 
@@ -159,6 +216,19 @@ export default function HomeTab() {
               {BMI_DISCLAIMER}
             </ThemedText>
           )}
+
+          {isStartOpen && program && profileId && (
+            <StartProgramSheet
+              visible
+              onClose={() => setIsStartOpen(false)}
+              profileId={profileId}
+              plan={data}
+              onDone={() => {
+                setIsStartOpen(false);
+                reload();
+              }}
+            />
+          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -188,6 +258,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     ...Elevation.card,
   },
+  heroAction: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.two,
