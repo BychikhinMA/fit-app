@@ -44,6 +44,7 @@ export async function stopProgram(programId: string, today: Date): Promise<void>
     .eq('program_id', programId)
     .eq('end_reason', 'pause')
     .order('ended_on', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   if (lastError) throw lastError;

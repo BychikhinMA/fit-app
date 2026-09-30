@@ -36,6 +36,23 @@ describe('programState', () => {
     const periods = [closed('2026-09-01', '2026-09-10', 'stop'), closed('2026-09-14', '2026-09-20', 'pause')];
     assert.deepEqual(programState(periods, d(9, 28)), { kind: 'paused', since: '2026-09-20' });
   });
+  // Старт и пауза в один день, затем «Продолжить» и «Остановить» в тот же день:
+  // оба периода нулевой длины с одним started_on. Последний — по created_at,
+  // а не по порядку строк из базы.
+  test('периоды с одной датой — последний по created_at', () => {
+    const paused = { ...closed('2026-09-29', '2026-09-29', 'pause'), created_at: '2026-09-29T18:06:00Z' };
+    const stopped = { ...closed('2026-09-29', '2026-09-29', 'stop'), created_at: '2026-09-29T18:10:00Z' };
+    const expected = { kind: 'stopped', since: '2026-09-29' };
+    assert.deepEqual(programState([paused, stopped], d(9, 30)), expected);
+    assert.deepEqual(programState([stopped, paused], d(9, 30)), expected);
+  });
+  test('периоды с одной датой — после стопа в тот же день дни не на паузе', () => {
+    const paused = { ...closed('2026-09-28', '2026-09-28', 'pause'), created_at: '2026-09-28T10:00:00Z' };
+    const stopped = { ...closed('2026-09-28', '2026-09-28', 'stop'), created_at: '2026-09-28T10:05:00Z' };
+    const input = { workoutDays: days, exceptions: [], periods: [stopped, paused], workoutLogs: [] };
+    const facts = getScheduleFacts(input, d(9, 28), d(9, 30), d(9, 30));
+    assert.deepEqual([...new Set(facts.map((f) => f.status))], ['not_started']);
+  });
   test('последний период закрыт стопом — остановлена', () => {
     assert.deepEqual(programState([closed('2026-09-14', '2026-09-20', 'stop')], d(9, 28)), {
       kind: 'stopped',

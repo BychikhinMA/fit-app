@@ -25,6 +25,7 @@ export default function HomeTab() {
   const [error, setError] = useState<string | null>(null);
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [isResuming, setIsResuming] = useState(false);
 
   useEffect(() => {
     getCurrentProfileId().then((current) => {
@@ -117,15 +118,20 @@ export default function HomeTab() {
                 {describeState(state)}
               </ThemedText>
               <Pressable
-                onPress={() =>
+                onPress={() => {
+                  setIsResuming(true);
+                  setResumeError(null);
                   resumeProgram(profileId as ProfileId, program.id, new Date())
                     .then(reload)
                     .catch((err) =>
                       setResumeError(`Не получилось продолжить программу: ${errorMessage(err, 'неизвестная ошибка')}`)
                     )
-                }
+                    .finally(() => setIsResuming(false));
+                }}
+                disabled={isResuming}
                 accessibilityRole="button"
-                style={styles.heroAction}>
+                accessibilityState={{ disabled: isResuming }}
+                style={[styles.heroAction, isResuming && styles.disabled]}>
                 <ThemedText type="linkPrimary">Продолжить →</ThemedText>
               </Pressable>
               {resumeError && (
@@ -259,6 +265,7 @@ const styles = StyleSheet.create({
     ...Elevation.card,
   },
   heroAction: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  disabled: { opacity: 0.4 },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.two,

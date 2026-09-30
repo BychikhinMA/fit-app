@@ -3,7 +3,13 @@
 // docs/superpowers/specs/2026-09-28-program-lifecycle-design.md.
 import { findWorkoutForDate, toISODate, type WorkoutDayException } from './calendar-dates.ts';
 
-export type ProgramPeriod = { started_on: string; ended_on: string | null; end_reason: 'pause' | 'stop' | null };
+export type ProgramPeriod = {
+  started_on: string;
+  ended_on: string | null;
+  end_reason: 'pause' | 'stop' | null;
+  /** Порядок периодов с одинаковыми датами (старт и пауза в один день). */
+  created_at?: string;
+};
 export type WorkoutLogFact = { date: string; workout_day_id: string | null; completed: boolean };
 
 export type ProgramState =
@@ -40,6 +46,18 @@ const DEFAULT_WEEKDAYS: Record<number, number[]> = {
   7: [0, 1, 2, 3, 4, 5, 6],
 };
 
+/** Сравнение по полю-дате, при равенстве — по `created_at` (кто создан позже, тот позже). */
+function byDateThenCreated(key: 'started_on' | 'ended_on') {
+  return (a: ProgramPeriod, b: ProgramPeriod): number => {
+    const da = a[key] ?? '';
+    const db = b[key] ?? '';
+    if (da !== db) return da < db ? -1 : 1;
+    const ca = a.created_at ?? '';
+    const cb = b.created_at ?? '';
+    return ca < cb ? -1 : ca > cb ? 1 : 0;
+  };
+}
+
 export function programState(periods: ProgramPeriod[], today: Date): ProgramState {
   if (periods.length === 0) return { kind: 'not_started' };
   const open = periods.find((p) => p.ended_on === null);
@@ -48,9 +66,7 @@ export function programState(periods: ProgramPeriod[], today: Date): ProgramStat
       ? { kind: 'scheduled', startsOn: open.started_on }
       : { kind: 'active', since: open.started_on };
   }
-  const last = [...periods].sort((a, b) => (a.started_on < b.started_on ? -1 : a.started_on > b.started_on ? 1 : 0))[
-    periods.length - 1
-  ];
+  const last = [...periods].sort(byDateThenCreated('started_on'))[periods.length - 1];
   const since = last.ended_on as string;
   return last.end_reason === 'stop' ? { kind: 'stopped', since } : { kind: 'paused', since };
 }
@@ -113,7 +129,7 @@ export function workoutStatus(date: Date, workoutDayId: string, logs: WorkoutLog
 function inactiveStatus(periods: ProgramPeriod[], iso: string): 'paused' | 'not_started' {
   const endedBefore = periods
     .filter((p) => p.ended_on !== null && p.ended_on <= iso)
-    .sort((a, b) => ((a.ended_on as string) < (b.ended_on as string) ? -1 : 1));
+    .sort(byDateThenCreated('ended_on'));
   const last = endedBefore[endedBefore.length - 1];
   return last?.end_reason === 'pause' ? 'paused' : 'not_started';
 }

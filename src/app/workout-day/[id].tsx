@@ -55,9 +55,9 @@ export default function WorkoutDayScreen() {
   const canMark = isScheduledOnOrigin && toISODate(originDate) <= toISODate(today);
   const status = planData && canMark ? workoutStatus(originDate, id, planData.workoutLogs, today) : null;
 
-  const reloadPlan = useCallback(() => {
-    if (!profileId) return;
-    loadPlan(profileId)
+  const reloadPlan = useCallback((): Promise<void> => {
+    if (!profileId) return Promise.resolve();
+    return loadPlan(profileId)
       .then(setPlanData)
       .catch((err) => console.error('Failed to reload plan data:', err));
   }, [profileId]);
@@ -78,7 +78,9 @@ export default function WorkoutDayScreen() {
           contextUsed: activeContext,
         });
       }
-      reloadPlan();
+      // Ждём свежие данные, пока кнопка заблокирована: иначе быстрое второе
+      // нажатие увидит старый статус и повторит то же действие.
+      await reloadPlan();
     } catch (err) {
       setMarkError(`Не получилось сохранить отметку: ${errorMessage(err, 'неизвестная ошибка')}`);
     } finally {

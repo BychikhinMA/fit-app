@@ -50,7 +50,8 @@ export async function loadPlan(profileId: ProfileId): Promise<PlanData> {
       .from('program_periods')
       .select('*')
       .eq('program_id', program.id)
-      .order('started_on');
+      .order('started_on')
+      .order('created_at');
     if (periodsError) throw periodsError;
     periods = periodsData ?? [];
   }
