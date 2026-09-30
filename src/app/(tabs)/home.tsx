@@ -67,7 +67,7 @@ export default function HomeTab() {
   const todayDate = new Date();
   const state = programState(periods, todayDate);
   const today = workoutForDate(workoutDays, todayDate, exceptions, periods);
-  const todayStatus = today ? workoutStatus(todayDate, workoutLogs, todayDate) : null;
+  const todayStatus = today ? workoutStatus(todayDate, today.id, workoutLogs, todayDate) : null;
   const hasBmi = settings.bmi_value != null;
   const hasCalories = settings.recommended_calories != null;
 

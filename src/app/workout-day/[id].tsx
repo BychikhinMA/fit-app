@@ -53,7 +53,7 @@ export default function WorkoutDayScreen() {
 
   const today = new Date();
   const canMark = isScheduledOnOrigin && toISODate(originDate) <= toISODate(today);
-  const status = planData && canMark ? workoutStatus(originDate, planData.workoutLogs, today) : null;
+  const status = planData && canMark ? workoutStatus(originDate, id, planData.workoutLogs, today) : null;
 
   const reloadPlan = useCallback(() => {
     if (!profileId) return;

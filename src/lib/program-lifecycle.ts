@@ -115,11 +115,15 @@ export async function markWorkoutDone(entry: {
 }
 
 export async function unmarkWorkoutDone(profileId: ProfileId, workoutDayId: string, date: Date): Promise<void> {
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from('workout_logs')
     .delete()
     .eq('profile_id', profileId)
     .eq('workout_day_id', workoutDayId)
-    .eq('date', toISODate(date));
+    .eq('date', toISODate(date))
+    .select('id');
   if (error) throw error;
+  // 204 от PostgREST не значит, что что-то удалено: без `.select` пустое
+  // удаление неотличимо от успешного.
+  if (!deleted || deleted.length === 0) throw new Error('Отметки за этот день уже нет — обнови экран');
 }

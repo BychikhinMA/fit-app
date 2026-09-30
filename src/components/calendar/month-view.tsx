@@ -62,7 +62,7 @@ export function MonthView({
               );
             }
 
-            const status = workoutStatus(date, workoutLogs, today);
+            const status = workoutStatus(date, day.id, workoutLogs, today);
             const statusLabel = { done: 'выполнено', missed: 'пропущено', planned: 'впереди' }[status];
 
             return (

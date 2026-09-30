@@ -25,7 +25,7 @@ export function DayView({
 }) {
   const theme = useTheme();
   const day = workoutForDate(workoutDays, anchor, exceptions, periods);
-  const status = day ? workoutStatus(anchor, workoutLogs, new Date()) : null;
+  const status = day ? workoutStatus(anchor, day.id, workoutLogs, new Date()) : null;
 
   return (
     <View style={styles.container}>

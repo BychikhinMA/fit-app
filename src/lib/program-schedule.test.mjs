@@ -111,11 +111,31 @@ describe('assignWeekdays', () => {
 
 describe('workoutStatus', () => {
   const logs = [{ date: '2026-09-21', workout_day_id: 'd1', completed: true }];
-  test('есть отметка — выполнено', () => assert.equal(workoutStatus(d(9, 21), logs, d(9, 28)), 'done'));
-  test('прошлое без отметки — пропущено', () => assert.equal(workoutStatus(d(9, 23), logs, d(9, 28)), 'missed'));
-  test('сегодня без отметки — впереди', () => assert.equal(workoutStatus(d(9, 28), logs, d(9, 28)), 'planned'));
+  test('есть отметка — выполнено', () => assert.equal(workoutStatus(d(9, 21), 'd1', logs, d(9, 28)), 'done'));
+  test('прошлое без отметки — пропущено', () => assert.equal(workoutStatus(d(9, 23), 'd2', logs, d(9, 28)), 'missed'));
+  test('сегодня без отметки — впереди', () => assert.equal(workoutStatus(d(9, 28), 'd1', logs, d(9, 28)), 'planned'));
   test('отметка с completed=false не считается', () => {
-    assert.equal(workoutStatus(d(9, 23), [{ date: '2026-09-23', workout_day_id: 'd2', completed: false }], d(9, 28)), 'missed');
+    assert.equal(workoutStatus(d(9, 23), 'd2', [{ date: '2026-09-23', workout_day_id: 'd2', completed: false }], d(9, 28)), 'missed');
+  });
+  // Регрессия: у Марии на 29.09 стоит День 1, а отметка осталась от Дня 2
+  // (до смены дней недели) — «Выполнено» не снималось.
+  test('отметка другого дня на ту же дату не считается', () => {
+    const other = [{ date: '2026-09-29', workout_day_id: 'd2', completed: true }];
+    assert.equal(workoutStatus(d(9, 29), 'd1', other, d(9, 30)), 'missed');
+    assert.equal(workoutStatus(d(9, 29), 'd2', other, d(9, 30)), 'done');
+  });
+  test('две отметки на одну дату — каждый день видит только свою', () => {
+    const both = [
+      { date: '2026-09-29', workout_day_id: 'd1', completed: true },
+      { date: '2026-09-29', workout_day_id: 'd2', completed: true },
+    ];
+    assert.equal(workoutStatus(d(9, 29), 'd1', both, d(9, 30)), 'done');
+    // После «Снять отметку» у d1 остаётся только чужая запись — d1 больше не выполнен.
+    const afterUnmark = both.filter((l) => l.workout_day_id !== 'd1');
+    assert.equal(workoutStatus(d(9, 29), 'd1', afterUnmark, d(9, 30)), 'missed');
+  });
+  test('отметка без workout_day_id (план пересобран) не считается', () => {
+    assert.equal(workoutStatus(d(9, 21), 'd1', [{ date: '2026-09-21', workout_day_id: null, completed: true }], d(9, 28)), 'missed');
   });
 });
 
@@ -125,8 +145,12 @@ describe('getScheduleFacts', () => {
     exceptions: [],
     // Активна 14–20.09, пауза с 21.09, снова активна с 28.09.
     periods: [closed('2026-09-14', '2026-09-21', 'pause'), open('2026-09-28')],
-    // Отметка без workout_day_id (план пересобран) всё равно считается выполнением.
-    workoutLogs: [{ date: '2026-09-14', workout_day_id: null, completed: true }],
+    // 14.09 отмечен d1 (стоит по расписанию); 16.09 — отметка чужого дня d3
+    // (осталась после смены дней недели), d2 на 16.09 она не закрывает.
+    workoutLogs: [
+      { date: '2026-09-14', workout_day_id: 'd1', completed: true },
+      { date: '2026-09-16', workout_day_id: 'd3', completed: true },
+    ],
   };
   const facts = getScheduleFacts(input, d(9, 7), d(10, 2), d(9, 30));
 

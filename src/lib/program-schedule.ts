@@ -96,10 +96,16 @@ export function assignWeekdays(
   return sortedDays.map((day, i) => ({ id: day.id, weekday: sortedWeekdays[i] }));
 }
 
-/** Статус запланированной тренировки на дату. Факт — любая отметка `completed` на эту дату. */
-export function workoutStatus(date: Date, logs: WorkoutLogFact[], today: Date): WorkoutStatus {
+/**
+ * Статус тренировки `workoutDayId`, стоящей по расписанию на дату. Факт —
+ * отметка `completed` на эту дату именно для этого дня: отметка другого дня
+ * на ту же дату (осталась после смены дней недели или переноса) не считается —
+ * иначе «Снять отметку» удаляла бы свою запись, а «Выполнено» держалось бы
+ * на чужой.
+ */
+export function workoutStatus(date: Date, workoutDayId: string, logs: WorkoutLogFact[], today: Date): WorkoutStatus {
   const iso = toISODate(date);
-  if (logs.some((l) => l.date === iso && l.completed)) return 'done';
+  if (logs.some((l) => l.date === iso && l.workout_day_id === workoutDayId && l.completed)) return 'done';
   return iso < toISODate(today) ? 'missed' : 'planned';
 }
 
@@ -132,7 +138,7 @@ export function getScheduleFacts<T extends ScheduledDay>(
     const scheduled = findWorkoutForDate(input.workoutDays, date, input.exceptions);
     if (!scheduled) continue;
     const status = isActiveOn(input.periods, date)
-      ? workoutStatus(date, input.workoutLogs, today)
+      ? workoutStatus(date, scheduled.id, input.workoutLogs, today)
       : inactiveStatus(input.periods, iso);
     facts.push({ date: iso, status, workoutDayId: scheduled.id });
   }
