@@ -153,6 +153,27 @@ export interface Database {
           workout_day_id?: string | null;
         }
       >;
+      program_periods: Table<
+        {
+          id: string;
+          program_id: string;
+          profile_id: ProfileId;
+          /** YYYY-MM-DD, первый день периода (входит). */
+          started_on: string;
+          /** YYYY-MM-DD, день закрытия (уже НЕ входит); null — период открыт. */
+          ended_on: string | null;
+          end_reason: 'pause' | 'stop' | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          program_id: string;
+          profile_id: ProfileId;
+          started_on: string;
+          ended_on?: string | null;
+          end_reason?: 'pause' | 'stop' | null;
+        }
+      >;
       programs: Table<
         {
           id: string;

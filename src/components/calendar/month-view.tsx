@@ -1,18 +1,13 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { StatusMark } from '@/components/calendar/status-mark';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  WEEKDAY_SHORT,
-  findWorkoutForDate,
-  formatDayLabel,
-  getMonthGrid,
-  isSameDay,
-  toISODate,
-} from '@/lib/calendar-dates';
+import { WEEKDAY_SHORT, formatDayLabel, getMonthGrid, isSameDay, toISODate } from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
+import { workoutForDate, workoutStatus } from '@/lib/program-schedule';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
@@ -20,10 +15,14 @@ export function MonthView({
   anchor,
   workoutDays,
   exceptions,
+  periods,
+  workoutLogs,
 }: {
   anchor: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
+  workoutLogs: PlanData['workoutLogs'];
 }) {
   const theme = useTheme();
   const today = new Date();
@@ -43,7 +42,7 @@ export function MonthView({
         <View key={wi} style={styles.weekRow}>
           {week.map((date, di) => {
             const inMonth = date.getMonth() === anchor.getMonth();
-            const day = findWorkoutForDate(workoutDays, date, exceptions);
+            const day = workoutForDate(workoutDays, date, exceptions, periods);
             const today_ = isSameDay(date, today);
             const dateLabel = date.getDate();
 
@@ -63,6 +62,9 @@ export function MonthView({
               );
             }
 
+            const status = workoutStatus(date, day.id, workoutLogs, today);
+            const statusLabel = { done: 'выполнено', missed: 'пропущено', planned: 'впереди' }[status];
+
             return (
               <Pressable
                 key={di}
@@ -70,7 +72,7 @@ export function MonthView({
                   router.push({ pathname: '/workout-day/[id]', params: { id: day.id, date: toISODate(date) } })
                 }
                 accessibilityRole="button"
-                accessibilityLabel={`${formatDayLabel(date)} — Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
+                accessibilityLabel={`${formatDayLabel(date)} — ${day.day_label}, ${statusLabel}. Открыть`}
                 style={[
                   styles.cell,
                   { backgroundColor: theme.backgroundElement },
@@ -79,7 +81,7 @@ export function MonthView({
                 <ThemedText type="small" style={!inMonth && styles.outOfMonth}>
                   {dateLabel}
                 </ThemedText>
-                <View style={[styles.dot, { backgroundColor: theme.accent }]} />
+                <StatusMark status={status} size="small" />
               </Pressable>
             );
           })}
@@ -104,9 +106,4 @@ const styles = StyleSheet.create({
     borderRadius: Radius.row,
   },
   outOfMonth: { opacity: 0.4 },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
 });

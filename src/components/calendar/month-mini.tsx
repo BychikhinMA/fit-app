@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { WEEKDAY_FULL, findWorkoutForDate, formatMonthLabel, getMonthGrid } from '@/lib/calendar-dates';
+import { WEEKDAY_FULL, formatMonthLabel, getMonthGrid } from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
+import { workoutForDate } from '@/lib/program-schedule';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
@@ -12,11 +13,13 @@ export function MonthMini({
   monthStart,
   workoutDays,
   exceptions,
+  periods,
   onSelect,
 }: {
   monthStart: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
   onSelect: (monthStart: Date) => void;
 }) {
   const theme = useTheme();
@@ -42,7 +45,7 @@ export function MonthMini({
           <View key={wi} style={styles.weekRow}>
             {week.map((date, di) => {
               const inMonth = date.getMonth() === monthStart.getMonth();
-              const day = inMonth ? findWorkoutForDate(workoutDays, date, exceptions) : undefined;
+              const day = inMonth ? workoutForDate(workoutDays, date, exceptions, periods) : undefined;
               return (
                 <View key={di} style={styles.miniCell}>
                   {day && <View style={[styles.miniDot, { backgroundColor: theme.accent }]} />}

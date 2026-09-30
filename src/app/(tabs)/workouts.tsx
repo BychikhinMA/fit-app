@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,6 +9,7 @@ import { QuarterView } from '@/components/calendar/quarter-view';
 import { ScaleSwitcher } from '@/components/calendar/scale-switcher';
 import { WeekView } from '@/components/calendar/week-view';
 import { YearView } from '@/components/calendar/year-view';
+import { ProgramControls } from '@/components/program/program-controls';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Elevation, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -17,6 +18,7 @@ import { type CalendarScale, shiftAnchor } from '@/lib/calendar-dates';
 import { getCurrentProfileId } from '@/lib/auth';
 import { errorMessage } from '@/lib/error-message';
 import { loadPlan, type PlanData } from '@/lib/load-plan';
+import { programState } from '@/lib/program-schedule';
 import type { ProfileId } from '@/types/database';
 
 export default function WorkoutsTab() {
@@ -34,12 +36,14 @@ export default function WorkoutsTab() {
     });
   }, []);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!profileId) return;
     loadPlan(profileId)
       .then(setData)
       .catch((err) => setError(`Не получилось загрузить план: ${errorMessage(err, 'неизвестная ошибка')}`));
   }, [profileId]);
+
+  useFocusEffect(reload);
 
   function handleNavigate(direction: 1 | -1) {
     setAnchor((prev) => shiftAnchor(prev, scale, direction));
@@ -70,7 +74,7 @@ export default function WorkoutsTab() {
     );
   }
 
-  const { program, workoutDays, exceptions } = data;
+  const { program, workoutDays, exceptions, periods, workoutLogs } = data;
 
   return (
     <ThemedView style={styles.container}>
@@ -84,6 +88,8 @@ export default function WorkoutsTab() {
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">{program.name}</ThemedText>
 
+              {profileId && <ProgramControls profileId={profileId} plan={data} onChanged={reload} />}
+
               <ScaleSwitcher
                 scale={scale}
                 onScaleChange={setScale}
@@ -92,14 +98,45 @@ export default function WorkoutsTab() {
                 onToday={() => setAnchor(new Date())}
               />
 
-              {scale === 'day' && <DayView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
-              {scale === 'week' && <WeekView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
-              {scale === 'month' && <MonthView anchor={anchor} workoutDays={workoutDays} exceptions={exceptions} />}
+              {programState(periods, new Date()).kind === 'not_started' && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  Тренировки появятся в календаре после старта программы.
+                </ThemedText>
+              )}
+
+              {scale === 'day' && (
+                <DayView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  periods={periods}
+                  workoutLogs={workoutLogs}
+                />
+              )}
+              {scale === 'week' && (
+                <WeekView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  periods={periods}
+                  workoutLogs={workoutLogs}
+                />
+              )}
+              {scale === 'month' && (
+                <MonthView
+                  anchor={anchor}
+                  workoutDays={workoutDays}
+                  exceptions={exceptions}
+                  periods={periods}
+                  workoutLogs={workoutLogs}
+                />
+              )}
               {scale === 'quarter' && (
                 <QuarterView
                   anchor={anchor}
                   workoutDays={workoutDays}
                   exceptions={exceptions}
+                  periods={periods}
                   onSelectMonth={handleSelectMonth}
                 />
               )}
@@ -108,6 +145,7 @@ export default function WorkoutsTab() {
                   anchor={anchor}
                   workoutDays={workoutDays}
                   exceptions={exceptions}
+                  periods={periods}
                   onSelectMonth={handleSelectMonth}
                 />
               )}

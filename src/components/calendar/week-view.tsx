@@ -1,18 +1,13 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { StatusMark } from '@/components/calendar/status-mark';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  WEEKDAY_FULL,
-  WEEKDAY_SHORT,
-  findWorkoutForDate,
-  getWeekDates,
-  isSameDay,
-  toISODate,
-} from '@/lib/calendar-dates';
+import { WEEKDAY_FULL, WEEKDAY_SHORT, getWeekDates, isSameDay, toISODate } from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
+import { workoutForDate, workoutStatus } from '@/lib/program-schedule';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
@@ -20,10 +15,14 @@ export function WeekView({
   anchor,
   workoutDays,
   exceptions,
+  periods,
+  workoutLogs,
 }: {
   anchor: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
+  workoutLogs: PlanData['workoutLogs'];
 }) {
   const theme = useTheme();
   const today = new Date();
@@ -32,7 +31,7 @@ export function WeekView({
   return (
     <View style={styles.row}>
       {weekDates.map((date, i) => {
-        const day = findWorkoutForDate(workoutDays, date, exceptions);
+        const day = workoutForDate(workoutDays, date, exceptions, periods);
         const dateLabel = date.getDate();
         const today_ = isSameDay(date, today);
 
@@ -52,6 +51,9 @@ export function WeekView({
           );
         }
 
+        const status = workoutStatus(date, day.id, workoutLogs, today);
+        const statusLabel = { done: 'выполнено', missed: 'пропущено', planned: 'впереди' }[status];
+
         return (
           <Pressable
             key={i}
@@ -59,7 +61,7 @@ export function WeekView({
               router.push({ pathname: '/workout-day/[id]', params: { id: day.id, date: toISODate(date) } })
             }
             accessibilityRole="button"
-            accessibilityLabel={`${WEEKDAY_FULL[i]}, ${dateLabel} — Открыть ${day.day_label}: ${day.target_muscle_groups.join(', ')}`}
+            accessibilityLabel={`${WEEKDAY_FULL[i]}, ${dateLabel} — ${day.day_label}, ${statusLabel}. Открыть`}
             style={[
               styles.cell,
               { backgroundColor: theme.backgroundElement },
@@ -69,7 +71,7 @@ export function WeekView({
               {WEEKDAY_SHORT[i]}
             </ThemedText>
             <ThemedText type="default">{dateLabel}</ThemedText>
-            <View style={[styles.dot, { backgroundColor: theme.accent }]} />
+            <StatusMark status={status} />
           </Pressable>
         );
       })}
@@ -90,10 +92,5 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     minHeight: 44,
     borderRadius: Radius.row,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
 });

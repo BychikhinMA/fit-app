@@ -12,11 +12,13 @@ export function YearView({
   anchor,
   workoutDays,
   exceptions,
+  periods,
   onSelectMonth,
 }: {
   anchor: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
   onSelectMonth: (monthStart: Date) => void;
 }) {
   const months = getYearMonths(anchor);
@@ -25,7 +27,13 @@ export function YearView({
     <View style={styles.grid}>
       {months.map((monthStart) => (
         <View key={monthStart.toISOString()} style={styles.item}>
-          <MonthMini monthStart={monthStart} workoutDays={workoutDays} exceptions={exceptions} onSelect={onSelectMonth} />
+          <MonthMini
+            monthStart={monthStart}
+            workoutDays={workoutDays}
+            exceptions={exceptions}
+            periods={periods}
+            onSelect={onSelectMonth}
+          />
         </View>
       ))}
     </View>

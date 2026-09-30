@@ -8,12 +8,18 @@ type Exercise = Database['public']['Tables']['exercises']['Row'];
 type MealPlan = Database['public']['Tables']['meal_plans']['Row'];
 type Meal = Database['public']['Tables']['meals']['Row'];
 type WorkoutDayExceptionRow = Database['public']['Tables']['workout_day_exceptions']['Row'];
+type ProgramPeriodRow = Database['public']['Tables']['program_periods']['Row'];
+type WorkoutLogRow = Database['public']['Tables']['workout_logs']['Row'];
 
 export type PlanData = {
   settings: ProfileSettings;
   program: Program | null;
   workoutDays: (WorkoutDay & { exercises: Exercise[] })[];
   exceptions: WorkoutDayExceptionRow[];
+  /** Периоды активной программы, по возрастанию started_on. Пусто — программа не запускалась. */
+  periods: ProgramPeriodRow[];
+  /** Все отметки тренировок профиля (факты, переживают пересборку плана). */
+  workoutLogs: WorkoutLogRow[];
   mealPlan: MealPlan | null;
   meals: Meal[];
 };
@@ -37,6 +43,25 @@ export async function loadPlan(profileId: ProfileId): Promise<PlanData> {
     .eq('profile_id', profileId)
     .eq('is_active', true)
     .maybeSingle();
+
+  let periods: ProgramPeriodRow[] = [];
+  if (program) {
+    const { data: periodsData, error: periodsError } = await supabase
+      .from('program_periods')
+      .select('*')
+      .eq('program_id', program.id)
+      .order('started_on')
+      .order('created_at');
+    if (periodsError) throw periodsError;
+    periods = periodsData ?? [];
+  }
+
+  const { data: workoutLogs, error: workoutLogsError } = await supabase
+    .from('workout_logs')
+    .select('*')
+    .eq('profile_id', profileId)
+    .order('date');
+  if (workoutLogsError) throw workoutLogsError;
 
   let workoutDays: (WorkoutDay & { exercises: Exercise[] })[] = [];
   if (program) {
@@ -88,5 +113,14 @@ export async function loadPlan(profileId: ProfileId): Promise<PlanData> {
     meals = mealsData ?? [];
   }
 
-  return { settings, program: program ?? null, workoutDays, exceptions: exceptions ?? [], mealPlan: mealPlan ?? null, meals };
+  return {
+    settings,
+    program: program ?? null,
+    workoutDays,
+    exceptions: exceptions ?? [],
+    periods,
+    workoutLogs: workoutLogs ?? [],
+    mealPlan: mealPlan ?? null,
+    meals,
+  };
 }

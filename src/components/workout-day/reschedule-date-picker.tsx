@@ -6,24 +6,26 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   WEEKDAY_SHORT,
-  findWorkoutForDate,
   formatMonthLabel,
   getMonthGrid,
   isSameDay,
   shiftAnchor,
 } from '@/lib/calendar-dates';
 import type { PlanData } from '@/lib/load-plan';
+import { workoutForDate } from '@/lib/program-schedule';
 
 type WorkoutDayEntry = PlanData['workoutDays'][number];
 
 export function RescheduleDatePicker({
   workoutDays,
   exceptions,
+  periods,
   originDate,
   onSelectDate,
 }: {
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
   originDate: Date;
   onSelectDate: (date: Date) => void;
 }) {
@@ -69,7 +71,7 @@ export function RescheduleDatePicker({
             const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const isOrigin = isSameDay(date, originDate);
             const disabled = isPast || isOrigin;
-            const hasWorkout = inMonth && findWorkoutForDate(workoutDays, date, exceptions) !== undefined;
+            const hasWorkout = inMonth && workoutForDate(workoutDays, date, exceptions, periods) !== undefined;
 
             return (
               <Pressable

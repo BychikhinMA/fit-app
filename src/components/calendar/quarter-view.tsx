@@ -12,11 +12,13 @@ export function QuarterView({
   anchor,
   workoutDays,
   exceptions,
+  periods,
   onSelectMonth,
 }: {
   anchor: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
   onSelectMonth: (monthStart: Date) => void;
 }) {
   const months = getQuarterMonths(anchor);
@@ -29,6 +31,7 @@ export function QuarterView({
           monthStart={monthStart}
           workoutDays={workoutDays}
           exceptions={exceptions}
+          periods={periods}
           onSelect={onSelectMonth}
         />
       ))}

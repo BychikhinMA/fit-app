@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Chip } from '@/components/onboarding/chip';
+import { Sheet } from '@/components/sheet';
 import { ThemedText } from '@/components/themed-text';
 import { RescheduleDatePicker } from '@/components/workout-day/reschedule-date-picker';
-import { Elevation, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Spacing } from '@/constants/theme';
 import { formatDayLabel } from '@/lib/calendar-dates';
 import { errorMessage } from '@/lib/error-message';
 import type { PlanData } from '@/lib/load-plan';
@@ -30,6 +30,7 @@ export function RescheduleSheet({
   originDate,
   workoutDays,
   exceptions,
+  periods,
   onDone,
 }: {
   visible: boolean;
@@ -39,9 +40,9 @@ export function RescheduleSheet({
   originDate: Date;
   workoutDays: WorkoutDayEntry[];
   exceptions: PlanData['exceptions'];
+  periods: PlanData['periods'];
   onDone: (newDate: Date) => void;
 }) {
-  const theme = useTheme();
   const [step, setStep] = useState<Step>('pick-date');
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [scope, setScope] = useState<RescheduleScope | null>(null);
@@ -114,18 +115,14 @@ export function RescheduleSheet({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} accessibilityLabel="Закрыть" />
-        <ScrollView
-          style={[styles.sheet, { backgroundColor: theme.background }, Elevation.card]}
-          contentContainerStyle={styles.sheetContent}>
+    <Sheet visible={visible} onClose={handleClose}>
           {step === 'pick-date' && (
             <>
               <ThemedText type="smallBold">Выбери новую дату</ThemedText>
               <RescheduleDatePicker
                 workoutDays={workoutDays}
                 exceptions={exceptions}
+                periods={periods}
                 originDate={originDate}
                 onSelectDate={handleSelectDate}
               />
@@ -170,37 +167,11 @@ export function RescheduleSheet({
               Закрыть
             </ThemedText>
           </Pressable>
-        </ScrollView>
-      </View>
-    </Modal>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  // На всю площадь, а не только над шторкой — иначе по бокам узкой шторки на широком экране фон не затемнялся.
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  // На широком экране ячейки дат (`aspectRatio: 1`) растягивались на всю ширину
-  // и месяц не влезал по высоте — шторка ограничена по ширине и прокручивается.
-  sheet: {
-    flexGrow: 0,
-    width: '100%',
-    maxWidth: 480,
-    maxHeight: '90%',
-    alignSelf: 'center',
-    borderTopLeftRadius: Radius.card,
-    borderTopRightRadius: Radius.card,
-  },
-  sheetContent: {
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

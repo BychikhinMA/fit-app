@@ -1,5 +1,6 @@
 import { computeBmi, computeCalorieRecommendation } from '@/lib/health-calc';
 import type { OnboardingAnswers } from '@/lib/onboarding-types';
+import { defaultWeekdays } from '@/lib/program-schedule';
 import { supabase } from '@/lib/supabase';
 import type { ExerciseContextVariant, ProfileId } from '@/types/database';
 
@@ -165,6 +166,8 @@ export async function generateStubPlan(profileId: ProfileId, answers: Onboarding
     .single();
   if (phaseError) throw phaseError;
 
+  // Дни раскладываются равномерно (Пн/Ср/Пт для трёх), пользователь меняет их при старте программы.
+  const weekdays = defaultWeekdays(daysPerWeek);
   for (let day = 0; day < daysPerWeek; day++) {
     const muscleGroup = MUSCLE_GROUP_CYCLE[day % MUSCLE_GROUP_CYCLE.length];
     const { data: workoutDay, error: workoutDayError } = await supabase
@@ -177,7 +180,7 @@ export async function generateStubPlan(profileId: ProfileId, answers: Onboarding
         warmup: [{ name: 'Разминка суставов', duration_or_reps: '5 минут' }],
         cooldown: [{ name: 'Растяжка целевых мышц', duration_or_reps: '5 минут' }],
         sort_order: day,
-        weekday: day % 7,
+        weekday: weekdays[day],
       })
       .select()
       .single();
